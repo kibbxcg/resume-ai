@@ -1,0 +1,57 @@
+# profile.example.yaml — 复制为 profile.yaml 并填入你的真实信息
+
+basic:
+  name: "张三"
+  title: "全栈工程师"
+  location: "北京"
+  email: "zhangsan@example.com"
+  github: "https://github.com/zhangsan"
+  website: "https://zhangsan.dev"
+
+summary: |
+  5 年全栈开发经验，专注 React 生态和 LLM 应用落地。
+  主导过 3 个从 0 到 1 的 B 端产品，日活 10w+。
+
+experience:
+  - company: "某某科技"
+    role: "高级前端工程师"
+    period: "2023.01 - 至今"
+    highlights:
+      - "主导前端架构从 Vue2 迁移到 React18，性能提升 40%"
+      - "设计并落地组件库（50+ 组件），覆盖 3 个业务线"
+  - company: "另一家公司"
+    role: "前端工程师"
+    period: "2020.07 - 2022.12"
+    highlights:
+      - "负责核心业务模块开发，代码量 5w+ 行"
+
+projects:
+  - name: "ResumeAI"
+    url: "https://github.com/zhangsan/resume-ai"
+    description: "AI 简历分身工具——让面试官和你的数字分身对话。基于 Next.js + Edge Runtime，实现 RAG-lite 架构和 SSE 流式交互。"
+    techs: ["Next.js", "TypeScript", "LLM API", "Vercel"]
+  - name: "另一个项目"
+    description: "另一个值得在面试中聊到的项目"
+    techs: ["Python", "FastAPI", "PostgreSQL"]
+
+education:
+  - school: "某某大学"
+    degree: "本科"
+    major: "计算机科学与技术"
+    period: "2016 - 2020"
+
+skills:
+  - "TypeScript / React / Next.js"
+  - "Python / FastAPI"
+  - "PostgreSQL / Redis"
+  - "Docker / CI/CD / 自动化部署"
+
+# AI 人设：控制你的数字分身的语气和风格
+persona:
+  tone: "专业但友好" # 专业严谨 | 轻松活泼 | 正式商务
+  language: "zh" # zh | en
+  extra_instructions: |
+    - 提到技术栈时保持谦虚但自信
+    - 被问到团队协作时强调沟通和主动性
+    - 不要编造任何未在 profile 中提到的经历
+    - 当被问到"最大的挑战"时，用具体项目举例而不是空谈
