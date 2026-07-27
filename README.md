@@ -40,7 +40,25 @@
 
 ## 📁 项目结构
 
-（把 Day 1 的目录树贴过来）
+resume-ai/
+├── README.md              ✅ 有内容了
+├── LICENSE                ✅ MIT
+├── CONTRIBUTING.md        ✅ 骨架
+├── CHANGELOG.md           ✅ 骨架
+├── docker-compose.yml     ✅ 能 make up 跑通
+├── Makefile               ✅ 一键启动
+├── .env.example           ✅ 环境变量模板
+├── .gitignore             ✅
+├── .github/workflows/ci.yml  ✅ PR 自动检查
+├── docs/
+│   ├── prd.md             ✅ 需求文档
+│   └── images/
+│       ├── user-flow.png  ✅ 流程图
+│       └── architecture.png ✅ 架构图
+├── frontend/              ✅ Next.js 能 npm run dev
+├── backend/               ✅ FastAPI 能跑 /health
+├── agent/                 ✅ 骨架就位
+└── scripts/               ✅ 空目录待填
 
 ## 📜 License
 
