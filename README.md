@@ -40,6 +40,7 @@
 
 ## 📁 项目结构
 
+```
 resume-ai/
 ├── README.md              ✅ 有内容了
 ├── LICENSE                ✅ MIT
@@ -59,6 +60,7 @@ resume-ai/
 ├── backend/               ✅ FastAPI 能跑 /health
 ├── agent/                 ✅ 骨架就位
 └── scripts/               ✅ 空目录待填
+```
 
 ## 📜 License
 
