@@ -45,9 +45,6 @@ next-env.d.ts
 .vscode/
 .idea/
 
-# 用户配置 — 包含真实信息，不提交
-profile.yaml
-
 # Python（遗留）
 __pycache__/
 *.py[cod]
