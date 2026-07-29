@@ -48,7 +48,7 @@ skills:
 
 # AI 人设：控制你的数字分身的语气和风格
 persona:
-  tone: "专业但友好" # 专业严谨 | 轻松活泼 | 正式商务
+  tone: "专业严谨" # 专业严谨 | 轻松活泼 | 正式商务
   language: "zh" # zh | en
   extra_instructions: |
     - 提到技术栈时保持谦虚但自信
