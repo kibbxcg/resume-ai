@@ -116,27 +116,41 @@ function getConfig() {
 // ============================================================
 
 /**
+ * 一段对话消息（用于传递历史记录）
+ */
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+/**
  * 发送消息给 LLM，返回一个 ReadableStream（SSE 流式响应）
  *
  * @param systemPrompt - 由 prompt.ts 拼好的 System Prompt
  * @param userMessage  - 面试官当前输入的问题
+ * @param history      - 最近的对话历史（最近 6 条），实现上下文记忆
  * @returns ReadableStream — 每个 chunk 是一小段 AI 回复文本（SSE 格式）
  */
 export async function streamChat(
   systemPrompt: string,
-  userMessage: string
+  userMessage: string,
+  history: ChatMessage[] = []   // ← 默认空数组，不传就是无记忆（向后兼容）
 ): Promise<ReadableStream> {
   const config = getConfig();
 
   // 拼接完整 API URL（所有兼容 OpenAI 的厂商都用 /chat/completions 路径）
   const url = `${config.baseURL}/chat/completions`;
 
-  // 准备请求体
+  // 准备请求体：
+  //   messages = [System Prompt] + [对话历史] + [当前问题]
+  //   历史记录放在 System Prompt 之后、当前问题之前，
+  //   这样 LLM 看到的就是一段完整的连续对话
   const body = JSON.stringify({
     model: config.model,
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user",   content: userMessage },
+      ...history,                                    // ← 历史消息（user/assistant 交替）
+      { role: "user",   content: userMessage },       // ← 当前问题
     ],
     stream: true,          // 关键：开启流式响应，AI 一个字一个字地回
     temperature: 0.7,      // 控制随机性（0 = 一本正经，1 = 天马行空）

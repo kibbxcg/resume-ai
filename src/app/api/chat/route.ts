@@ -18,9 +18,12 @@ import { streamChat } from "@/lib/llm/provider";
 
 export async function POST(request: NextRequest) {
   try {
-    // ── 1.1 从请求体中解出面试官发的消息 ──
+    // ── 1.1 从请求体中解出消息和历史 ──
     const body = await request.json().catch(() => null);
     const userMessage: string = body?.message?.trim();
+    // 对话历史：前端传来最近 6 条（3 轮 Q&A），实现 AI 上下文记忆
+    const history: { role: "user" | "assistant"; content: string }[] =
+      Array.isArray(body?.history) ? body.history.slice(-6) : [];
 
     // 空消息或没传 message → 直接拒绝
     if (!userMessage) {
@@ -31,7 +34,6 @@ export async function POST(request: NextRequest) {
     }
 
     // ── 1.2 长度限制：防止恶意滥用（有人发一本小说过来） ──
-    // 这个值的配置在 .env.local 中，下面 continue...
     if (userMessage.length > 2000) {
       return new Response(
         JSON.stringify({ error: "消息过长，请控制在 2000 字以内" }),
@@ -39,9 +41,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── 1.3 拼 System Prompt + 调 LLM ──
+    // ── 1.3 拼 System Prompt + 调 LLM（传入历史记录） ──
     const systemPrompt = buildSystemPrompt();
-    const llmStream = await streamChat(systemPrompt, userMessage);
+    const llmStream = await streamChat(systemPrompt, userMessage, history);
 
     // ── 1.4 把 LLM 原始流转换成前端能消费的 SSE 流 ──
     const sseStream = transformToSSE(llmStream);

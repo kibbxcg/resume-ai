@@ -6,6 +6,27 @@
 
 ## [Unreleased] — 当前开发中
 
+### 2026-07-28 — 对话上下文记忆
+
+**变更类型**：新增
+
+**说明**：AI 分身现在能记住面试官前面问了什么，支持多轮追问。历史记录存在浏览器端，不加数据库。
+
+**变更文件**：
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `src/lib/llm/provider.ts` | 修改 | `streamChat()` 新增 `history` 参数，对话历史注入 `messages[]` |
+| `src/app/api/chat/route.ts` | 修改 | 从请求体提取 `history`，`slice(-6)` 控制 Token 消耗 |
+| `src/components/ChatWindow.tsx` | 修改 | 发送请求时附带完整 `messages` 数组 |
+
+**技术备注**：
+- 历史记录存浏览器 `useState`，刷新即焚，无需数据库
+- `route.ts` 自动截取最近 6 条（3 轮 Q&A），保障 Token 预算
+- `history` 参数默认空数组，向后兼容（第一条消息自动适配）
+
+---
+
 ### 2026-07-28 — MVP 核心功能实现
 
 **变更类型**：新增

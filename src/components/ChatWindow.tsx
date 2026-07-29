@@ -91,11 +91,16 @@ export default function ChatWindow({ candidateName, candidateTitle }: Props) {
     setMessages((prev) => [...prev, aiMsg]);
 
     try {
-      // 3. 调 /api/chat，发 POST 请求
+      // 3. 调 /api/chat，发 POST 请求（附带历史记录实现上下文记忆）
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({
+          message: text,
+          // 把当前对话历史带过去（不含刚刚加的新消息，因为 setState 还没生效）
+          // route.ts 会自动取最近 6 条，控制 Token 消耗
+          history: messages.map((m) => ({ role: m.role, content: m.content })),
+        }),
       });
 
       if (!response.ok) {
