@@ -6,6 +6,37 @@
 
 ## [Unreleased] — 当前开发中
 
+### 2026-07-30 — RAG 管道核心实现（Phase 1）
+
+**变更类型**：新增
+
+**说明**：实现自进化 RAG 管道——本地嵌入模型 + 余弦相似度检索 + 已审核 Q&A 语义匹配。英文向量模型含金量拉升。
+
+**变更文件**：
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `src/lib/embedding.ts` | 新增 | 本地嵌入引擎：加载 bge-small-zh-v1.5（512维，80MB），均值池化 + L2 归一化，余弦相似度检索 |
+| `src/lib/knowledge.ts` | 新增 | 知识库模块：读取 curated_qa.yaml → 自动向量化 → 语义检索接口 |
+| `src/lib/prompt.ts` | 修改 | 新增 `buildRAGContext()`，`buildSystemPrompt()` 支持可选 `ragHits` 参数 |
+| `src/app/api/chat/route.ts` | 修改 | 集成 RAG：启动加载 curated QA → 每次请求检索 → 命中注入/未命中回退 profile → 自动记录 |
+| `curated_qa.example.yaml` | 新增 | 预置 5 条高质量中文问答模板 |
+| `curated_qa.yaml` | 新增 | 用户预置问答文件 |
+| `package.json` | 修改 | 新增依赖：`@xenova/transformers` |
+| `.gitignore` | 修改 | 移除 `profile.yaml` 忽略规则（Vercel 部署必须包含） |
+| `docs/REQUIREMENTS.md` | 修改 | RAG 架构从"两级检索"改为"单级 Q&A 检索 + profile 全量兜底"，中文嵌入模型 |
+| `docs/IMPLEMENTATION_PLAN.md` | 新增 | 4 阶段实现方案文档 |
+
+**架构备注**：
+- RAG 策略：已审核 Q&A（语义检索）→ profile.yaml 全量注入（兜底），profile 不分块不参与检索
+- 嵌入模型：`Xenova/bge-small-zh-v1.5`，中文语义匹配精准（"你熟悉哪些技术" ↔ "你熟悉哪些技术栈" = 0.86）
+- 均值池化：手工实现（`@xenova/transformers` 的 `pooling` 选项不生效），对 token 维度求平均
+- 模型下载走 `hf-mirror.com` 国内镜像，规避 HuggingFace 被墙
+- sharp 问题：用空壳替换 `node_modules/.../sharp/lib/index.js`，文本嵌入不需要图片处理
+- 检索缓存：curated QA 在启动时一次性加载 + 向量化，后续请求复用
+
+---
+
 ### 2026-07-28 — 对话上下文记忆
 
 **变更类型**：新增

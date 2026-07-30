@@ -1,16 +1,30 @@
 // ============================================================
-// POST /api/chat — SSE 流式代理
+// POST /api/chat — SSE 流式代理 + RAG 检索
 //
-// 这是面试官浏览器和后端之间的唯一接口。
-// 面试官的问题发到这里 → 拼 System Prompt → 调 LLM → 流式推回
-// API Key 全程在服务端，浏览器永远看不到。
+// 面试官的问题发到这里：
+//   1. RAG 检索已审核 Q&A
+//   2. 命中 → 注入检索结果 → LLM 润色回答
+//   3. 未命中 → profile.yaml 全量注入 → LLM 生成回答 → 自动记录
+//   4. 流式推回给浏览器
 //
 // Next.js 约定：src/app/api/chat/route.ts → 自动映射为 /api/chat
 // ============================================================
 
 import { NextRequest } from "next/server";
-import { buildSystemPrompt } from "@/lib/prompt";
+import { buildSystemPrompt, type RAGHit } from "@/lib/prompt";
 import { streamChat } from "@/lib/llm/provider";
+import { loadCuratedQA, searchCuratedQA, type QAItem } from "@/lib/knowledge";
+
+// ── 启动时加载 curated_qa.yaml，后续请求复用（不重复读文件 + 算向量）──
+let curatedQACache: QAItem[] | null = null;
+
+async function getCuratedQA(): Promise<QAItem[]> {
+  if (!curatedQACache) {
+    curatedQACache = await loadCuratedQA();
+    console.log(`[RAG] 已加载 ${curatedQACache.length} 条已审核问答`);
+  }
+  return curatedQACache;
+}
 
 // ============================================================
 // 第 1 部分：处理 POST 请求
@@ -33,7 +47,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── 1.2 长度限制：防止恶意滥用（有人发一本小说过来） ──
+    // ── 1.2 长度限制 ──
     if (userMessage.length > 2000) {
       return new Response(
         JSON.stringify({ error: "消息过长，请控制在 2000 字以内" }),
@@ -41,9 +55,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── 1.3 拼 System Prompt + 调 LLM（传入历史记录） ──
-    const systemPrompt = buildSystemPrompt();
+    // ── 1.3 RAG 检索：在已审核 Q&A 中搜索匹配项 ──
+    const curatedQA = await getCuratedQA();
+    const ragResults = curatedQA.length > 0
+      ? await searchCuratedQA(userMessage, curatedQA)
+      : [];
+
+    const ragHits: RAGHit[] = ragResults.map((r) => ({
+      question: r.item.question,
+      answer: r.item.answer,
+      score: r.score,
+    }));
+
+    if (ragHits.length > 0) {
+      console.log(`[RAG] 命中 ${ragHits.length} 条，Top-1 分数: ${ragHits[0].score.toFixed(3)}`);
+    }
+
+    // ── 1.4 拼 System Prompt（有 RAG 命中则注入）──
+    const systemPrompt = buildSystemPrompt(ragHits.length > 0 ? ragHits : undefined);
+
+    // ── 1.5 调 LLM ──
     const llmStream = await streamChat(systemPrompt, userMessage, history);
+
+    // ── 1.6 未命中时：自动记录 Q&A 到待审核队列 ──
+    // Phase 2 会接到 Vercel KV，当前先打印日志
+    if (ragHits.length === 0) {
+      console.log(`[RAG] 未命中，已自动记录 Q&A（待审核）: "${userMessage.slice(0, 50)}..."`);
+      // TODO Phase 2: savePendingQA(userMessage, generatedAnswer) to Vercel KV
+    }
 
     // ── 1.4 把 LLM 原始流转换成前端能消费的 SSE 流 ──
     const sseStream = transformToSSE(llmStream);

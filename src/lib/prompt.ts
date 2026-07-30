@@ -132,17 +132,50 @@ function buildProfileContext(profile: Profile): string {
 // 把上面三个模块按正确顺序组合，并控制 Token 预算
 // ============================================================
 
+/** RAG 检索结果中一条已收录的问答 */
+export interface RAGHit {
+  question: string;
+  answer: string;
+  score: number; // 相似度分数
+}
+
+/**
+ * 把 RAG 检索结果拼成一段提示文字
+ *
+ * 告诉 LLM：以下是求职者审核过的标准答案，优先基于它们回答
+ */
+function buildRAGContext(hits: RAGHit[]): string {
+  const entries = hits.map((hit, i) => {
+    return [
+      `【已审核问答 ${i + 1}】（相似度: ${hit.score.toFixed(2)}）`,
+      `面试官曾问: "${hit.question}"`,
+      `求职者的标准答案:`,
+      hit.answer,
+    ].join("\n");
+  });
+
+  return [
+    "## 已审核的高质量回答（优先参考）",
+    "",
+    "以下是从知识库中检索到的、求职者本人审核确认过的问答记录。",
+    "请优先基于这些答案来回答面试官的问题，你可以用自己的话润色，但不要偏离原意。",
+    "",
+    ...entries,
+  ].join("\n");
+}
+
 /**
  * 拼装 System Prompt
  *
  * 结构顺序：
  *   1. Guardrails（最前 → 优先级最高，不可被后文覆盖）
  *   2. Persona（中间 → 控制语气风格）
- *   3. Profile Context（最后 → 离用户问题最近，LLM 检索效果最好）
+ *   3. Profile Context（始终全量注入 → 冷启动基线）
+ *   4. RAG Context（可选 → 检索到的已审核问答，补充参考）
  *
- * 原则：只拼不调 API，调用 LLM 是 provider.ts 的事
+ * @param ragHits - RAG 检索命中的已审核问答（可选，来自 knowledge.ts）
  */
-export function buildSystemPrompt(): string {
+export function buildSystemPrompt(ragHits?: RAGHit[]): string {
   const { language } = profile.persona;
 
   const sections = [
@@ -151,11 +184,15 @@ export function buildSystemPrompt(): string {
     buildProfileContext(profile),
   ];
 
+  // 如果有 RAG 检索结果，追加在 profile 之后
+  if (ragHits && ragHits.length > 0) {
+    sections.push(buildRAGContext(ragHits));
+  }
+
   const prompt = sections.join("\n\n---\n\n");
 
   // 粗略估算 Token 数（中文约 1 字 = 1 token，英文约 4 字母 = 1 token）
-  // 目标控制在 4K tokens 以内，超出则返回精简版
-  const estimatedTokens = prompt.length / 2; // 混合中英文取粗略折中
+  const estimatedTokens = prompt.length / 2;
   const MAX_TOKENS = 4000;
 
   if (estimatedTokens > MAX_TOKENS) {
