@@ -53,3 +53,6 @@ __pycache__/
 
 # Docker 数据卷（遗留）
 data/
+
+.vercel
+.env*

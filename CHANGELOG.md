@@ -6,6 +6,33 @@
 
 ## [Unreleased] — 当前开发中
 
+### 2026-07-31 — Vercel KV + Dashboard 审核后台（Phase 2）
+
+**变更类型**：新增
+
+**说明**：实现自进化知识库闭环——自动记录 Q&A → Dashboard 审核 → 收录后加入 RAG 检索。求职者通过 `/dashboard` 管理知识库，AI 分身越用越准。
+
+**变更文件**：
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `src/lib/kv.ts` | 新增 | Vercel KV 读写封装：待审核/已收录/热门统计三个子模块 |
+| `src/app/api/dashboard/route.ts` | 新增 | Dashboard API：GET 查询 + POST 操作（收录/编辑/删除），DASHBOARD_SECRET 鉴权 |
+| `src/app/dashboard/page.tsx` | 新增 | 求职者审核页面：待审核列表 + 已收录列表 + 热门问题 + 编辑弹窗 |
+| `src/app/api/chat/route.ts` | 修改 | 集成 KV：启动时合并 YAML+KV 加载 curated QA，tee 流收集答案写入 pending |
+| `.env.local` | 修改 | 新增 DASHBOARD_SECRET + KV 连接变量 |
+| `.env.example` | 修改 | 新增 DASHBOARD_SECRET 模板 |
+| `package.json` | 修改 | 新增依赖：`@vercel/kv` |
+
+**技术备注**：
+- 存储：Upstash Redis（Vercel Free Plan，30MB），无需数据库
+- `@vercel/kv` 自动 JSON 序列化/反序列化，不需要手动 `JSON.stringify`/`JSON.parse`
+- 自进化链路：chat 未命中 → tee 收集答案 → `savePendingQA()` → Dashboard 审核 → `approveQA()` 含向量
+- curated QA 合并策略：YAML + KV 并行加载，KV 同 ID 覆盖 YAML
+- 鉴权：Dashboard 通过 URL `?key=xxx` 与 `DASHBOARD_SECRET` 比对，无需注册登录
+
+---
+
 ### 2026-07-30 — RAG 管道核心实现（Phase 1）
 
 **变更类型**：新增

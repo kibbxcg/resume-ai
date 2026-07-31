@@ -1,0 +1,352 @@
+"use client";
+
+// ============================================================
+// /dashboard — 求职者审核后台
+//
+// 求职者打开 /dashboard?key=xxx 可以看到：
+//   1. 待审核 Q&A（自动记录的）— 收录/编辑/删除
+//   2. 已收录 Q&A — 编辑/删除
+//   3. 统计数据 + 热门问题
+// ============================================================
+
+import { useState, useEffect, useCallback } from "react";
+
+// ============================================================
+// 类型（和 API 返回结构一致）
+// ============================================================
+
+interface PendingQA {
+  id: string;
+  question: string;
+  answer: string;
+  createdAt: string;
+}
+
+interface CuratedQA {
+  id: string;
+  question: string;
+  answer: string;
+  source: string;
+  createdAt: string;
+}
+
+interface HotQuestion {
+  question: string;
+  count: number;
+}
+
+interface DashboardData {
+  pending: PendingQA[];
+  curated: CuratedQA[];
+  stats: {
+    totalConversations: number;
+    pendingCount: number;
+    curatedCount: number;
+  };
+  hotQuestions: HotQuestion[];
+}
+
+// ============================================================
+// 组件
+// ============================================================
+
+export default function DashboardPage() {
+  // ── URL 参数 ──
+  const [key, setKey] = useState<string>("");
+
+  // ── 数据状态 ──
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // ── 编辑弹窗状态 ──
+  const [editing, setEditing] = useState<PendingQA | CuratedQA | null>(null);
+  const [editQuestion, setEditQuestion] = useState("");
+  const [editAnswer, setEditAnswer] = useState("");
+
+  // ── 从 URL 读 key ──
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setKey(params.get("key") || "");
+  }, []);
+
+  // ── 刷新数据 ──
+  const fetchData = useCallback(async () => {
+    if (!key) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/dashboard?key=${encodeURIComponent(key)}`);
+      if (res.status === 401) {
+        setError("未授权访问，请检查 URL 中的 key 参数。");
+        setData(null);
+      } else if (!res.ok) {
+        setError("加载失败，请重试。");
+      } else {
+        setData(await res.json());
+      }
+    } catch {
+      setError("网络错误，请检查连接。");
+    } finally {
+      setLoading(false);
+    }
+  }, [key]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // ── 操作：收录/编辑/删除 ──
+  async function doAction(action: string, body: Record<string, string>) {
+    const res = await fetch("/api/dashboard", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key, action, ...body }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "操作失败" }));
+      alert(err.error || "操作失败");
+    } else {
+      fetchData(); // 刷新列表
+    }
+  }
+
+  function openEditor(item: PendingQA | CuratedQA) {
+    setEditing(item);
+    setEditQuestion(item.question);
+    setEditAnswer(item.answer);
+  }
+
+  function closeEditor() {
+    setEditing(null);
+  }
+
+  async function handleEdit() {
+    if (!editing || !editQuestion.trim() || !editAnswer.trim()) return;
+
+    // 待审核的用 delete_pending + 新建（因为收录需重新算向量，走 approve 路径）
+    if ("pendingId" in editing || editing.id.startsWith("pending_")) {
+      await doAction("delete_pending", { id: editing.id });
+      await doAction("approve", {
+        question: editQuestion.trim(),
+        answer: editAnswer.trim(),
+        pendingId: editing.id,
+      });
+    } else {
+      await doAction("edit", {
+        id: editing.id,
+        question: editQuestion.trim(),
+        answer: editAnswer.trim(),
+      });
+    }
+    closeEditor();
+  }
+
+  // ============================================================
+  // 渲染
+  // ============================================================
+
+  // ── 没有 key ──
+  if (!key) {
+    return (
+      <div className="flex items-center justify-center h-dvh text-gray-500">
+        请在 URL 后添加 ?key=你的密码 访问 Dashboard。
+      </div>
+    );
+  }
+
+  // ── 加载中 ──
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-dvh text-gray-400">
+        加载中...
+      </div>
+    );
+  }
+
+  // ── 鉴权失败或错误 ──
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-dvh">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  // ============================================================
+  // 正常显示
+  // ============================================================
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
+      {/* 顶部统计 */}
+      <header>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          📊 ResumeAI Dashboard
+        </h1>
+        <div className="flex gap-4 mt-3 text-sm text-gray-500 dark:text-gray-400">
+          <span>总对话: {data.stats.totalConversations}</span>
+          <span>已收录: {data.stats.curatedCount}</span>
+          <span>待审核: {data.stats.pendingCount}</span>
+        </div>
+      </header>
+
+      {/* 热门问题 */}
+      {data.hotQuestions.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold mb-3">🔥 热门问题 Top 10</h2>
+          <div className="space-y-1">
+            {data.hotQuestions.map((q) => (
+              <div
+                key={q.question}
+                className="flex justify-between text-sm px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+              >
+                <span>{q.question}</span>
+                <span className="text-gray-400">{q.count} 次</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 待审核 */}
+      <section>
+        <h2 className="text-lg font-semibold mb-3">
+          ⏳ 待审核（{data.stats.pendingCount} 条）
+        </h2>
+        {data.pending.length === 0 ? (
+          <p className="text-sm text-gray-400">暂无待审核问答。面试官开始对话后这里会自动出现。</p>
+        ) : (
+          <div className="space-y-3">
+            {data.pending.map((item) => (
+              <div
+                key={item.id}
+                className="border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 bg-yellow-50 dark:bg-yellow-900/10"
+              >
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Q: {item.question}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-3">
+                  A: {item.answer}
+                </p>
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() =>
+                      doAction("approve", {
+                        question: item.question,
+                        answer: item.answer,
+                        pendingId: item.id,
+                      })
+                    }
+                    className="px-3 py-1 text-xs rounded-lg bg-green-600 text-white hover:bg-green-700"
+                  >
+                    收录
+                  </button>
+                  <button
+                    onClick={() => openEditor(item)}
+                    className="px-3 py-1 text-xs rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    编辑
+                  </button>
+                  <button
+                    onClick={() => doAction("delete_pending", { id: item.id })}
+                    className="px-3 py-1 text-xs rounded-lg bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400"
+                  >
+                    删除
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* 已收录 */}
+      <section>
+        <h2 className="text-lg font-semibold mb-3">
+          ✅ 已收录（{data.stats.curatedCount} 条）
+        </h2>
+        {data.curated.length === 0 ? (
+          <p className="text-sm text-gray-400">暂无已收录问答。收录后这里会显示。</p>
+        ) : (
+          <div className="space-y-3">
+            {data.curated.map((item) => (
+              <div
+                key={item.id}
+                className="border border-gray-200 dark:border-gray-700 rounded-xl p-4"
+              >
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    Q: {item.question}
+                  </p>
+                  <span className="text-xs text-gray-400">
+                    {item.source === "preloaded" ? "预置" : "审核"}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-3">
+                  A: {item.answer}
+                </p>
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() => openEditor(item)}
+                    className="px-3 py-1 text-xs rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    编辑
+                  </button>
+                  <button
+                    onClick={() => doAction("delete_curated", { id: item.id })}
+                    className="px-3 py-1 text-xs rounded-lg bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400"
+                  >
+                    删除
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* 编辑弹窗 */}
+      {editing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-lg space-y-4">
+            <h3 className="text-lg font-semibold">编辑问答</h3>
+            <div>
+              <label className="block text-sm font-medium mb-1">问题</label>
+              <input
+                value={editQuestion}
+                onChange={(e) => setEditQuestion(e.target.value)}
+                className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">答案</label>
+              <textarea
+                value={editAnswer}
+                onChange={(e) => setEditAnswer(e.target.value)}
+                rows={6}
+                className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 resize-none"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={closeEditor}
+                className="px-4 py-2 text-sm rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleEdit}
+                disabled={!editQuestion.trim() || !editAnswer.trim()}
+                className="px-4 py-2 text-sm rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
