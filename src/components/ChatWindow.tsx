@@ -26,6 +26,12 @@ interface Message {
   content: string;         // 消息内容
 }
 
+interface HotQuestion {
+  question: string;
+  count: number;
+  lastAsked: string;
+}
+
 // ============================================================
 // Props：从服务端组件传入
 // ============================================================
@@ -56,6 +62,7 @@ export default function ChatWindow({ candidateName, candidateTitle }: Props) {
   const [input, setInput] = useState("");                       // 输入框内容
   const [isLoading, setIsLoading] = useState(false);            // 是否正在等待 AI 回复
   const [error, setError] = useState<string | null>(null);      // 错误信息
+  const [hotQuestions, setHotQuestions] = useState<HotQuestion[]>([]); // 热门问题（其他面试官也问了）
 
   // ── DOM 引用 ──
   const messagesEndRef = useRef<HTMLDivElement>(null);          // 消息列表底部（自动滚动用）
@@ -71,11 +78,29 @@ export default function ChatWindow({ candidateName, candidateTitle }: Props) {
     inputRef.current?.focus();
   }, []);
 
+  // ── 挂载时拉取热门问题（KV 未配置时优雅降级为空数组）──
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/hot-questions")
+      .then((res) => (res.ok ? res.json() : { hotQuestions: [] }))
+      .then((data) => {
+        if (!cancelled) {
+          setHotQuestions(Array.isArray(data?.hotQuestions) ? data.hotQuestions : []);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setHotQuestions([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // ============================================================
   // 发送消息 + 接收 SSE 流
   // ============================================================
-  async function handleSend() {
-    const text = input.trim();
+  async function handleSend(textOverride?: string) {
+    const text = (textOverride ?? input).trim();
     if (!text || isLoading) return;   // 空消息或正在加载 → 不处理
 
     // 1. 把用户消息加入列表
@@ -168,12 +193,24 @@ export default function ChatWindow({ candidateName, candidateTitle }: Props) {
   }
 
   // ============================================================
+  // 错误重试：移除失败的提问，重新发送
+  // ============================================================
+  function handleRetry() {
+    if (isLoading) return;
+    const lastUser = [...messages].reverse().find((m) => m.role === "user");
+    if (!lastUser) return;
+    setMessages((prev) => prev.filter((m) => m.id !== lastUser.id));
+    setError(null);
+    handleSend(lastUser.content);
+  }
+
+  // ============================================================
   // 渲染
   // ============================================================
   return (
     <div className="flex flex-col h-dvh max-w-2xl mx-auto">
       {/* ── 顶部标题栏 ── */}
-      <header className="shrink-0 border-b border-gray-200 dark:border-gray-800 px-4 py-3 text-center">
+      <header className="shrink-0 border-b border-gray-200 dark:border-gray-800 px-14 py-3 text-center">
         <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           {candidateName} · AI 分身
         </h1>
@@ -210,7 +247,8 @@ export default function ChatWindow({ candidateName, candidateTitle }: Props) {
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}
+                       animate-[messageIn_0.3s_ease-out]`}
           >
             <div
               className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed
@@ -226,11 +264,13 @@ export default function ChatWindow({ candidateName, candidateTitle }: Props) {
                 msg.content ? (
                   <ReactMarkdown>{msg.content}</ReactMarkdown>
                 ) : (
-                  // AI 还在想，显示打字动画
-                  <span className="inline-flex items-center gap-1 text-gray-400">
-                    <span className="animate-bounce">●</span>
-                    <span className="animate-bounce [animation-delay:0.1s]">●</span>
-                    <span className="animate-bounce [animation-delay:0.2s]">●</span>
+                  // AI 正在生成，显示闪烁光标
+                  <span className="inline-flex items-center gap-1.5 text-gray-400">
+                    <span
+                      className="w-0.5 h-4 bg-current animate-pulse rounded-full"
+                      aria-hidden
+                    />
+                    <span className="text-xs">正在思考…</span>
                   </span>
                 )
               ) : (
@@ -240,18 +280,57 @@ export default function ChatWindow({ candidateName, candidateTitle }: Props) {
           </div>
         ))}
 
-        {/* 错误提示 */}
+        {/* 错误提示 + 重试 */}
         {error && (
-          <div className="text-center">
+          <div className="text-center space-y-2">
             <p className="inline-block px-4 py-2 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg">
               {error}
             </p>
+            <div>
+              <button
+                onClick={handleRetry}
+                className="inline-block px-4 py-1.5 text-sm rounded-lg
+                           border border-gray-300 dark:border-gray-600
+                           text-gray-600 dark:text-gray-300
+                           hover:bg-gray-100 dark:hover:bg-gray-800
+                           transition-colors"
+              >
+                重新发送
+              </button>
+            </div>
           </div>
         )}
 
         {/* 滚动锚点 */}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* ── 其他面试官也问了（从 KV 读真实数据）── */}
+      {hotQuestions.length > 0 && (
+        <div className="shrink-0 px-4 pt-3 pb-1">
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
+            🔥 其他面试官也问了
+          </p>
+          <div className="flex gap-2 overflow-x-auto pb-1 -mb-1 scrollbar-thin">
+            {hotQuestions.map((q) => (
+              <button
+                key={q.question}
+                onClick={() => handleSuggested(q.question)}
+                disabled={isLoading}
+                className="shrink-0 px-3 py-1.5 text-xs rounded-full
+                           border border-gray-200 dark:border-gray-700
+                           bg-gray-50 dark:bg-gray-800
+                           text-gray-600 dark:text-gray-300
+                           hover:bg-gray-100 dark:hover:bg-gray-700
+                           transition-colors disabled:opacity-50"
+              >
+                {q.question}
+                <span className="ml-1 text-[10px] text-gray-400">×{q.count}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── 底部输入区 ── */}
       <div className="shrink-0 border-t border-gray-200 dark:border-gray-800 p-4">
@@ -271,7 +350,7 @@ export default function ChatWindow({ candidateName, candidateTitle }: Props) {
                        disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <button
-            onClick={handleSend}
+            onClick={() => handleSend()}
             disabled={isLoading || !input.trim()}
             className="px-5 py-2.5 text-sm font-medium rounded-xl
                        bg-blue-600 text-white hover:bg-blue-700

@@ -1,8 +1,18 @@
 @import "tailwindcss";
 
+/* 暗色模式改为 class 驱动（配合 ThemeToggle 手动切换）。
+   原来用 @media (prefers-color-scheme)，现在由根元素上的 .dark 类决定，
+   该类由 layout.tsx 的内联脚本在首次绘制前根据 localStorage / 系统偏好设置。 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 @theme inline {
@@ -14,14 +24,19 @@
     "Courier New", monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* 消息气泡进场动画：从下方淡入 + 轻微缩放 */
+@keyframes messageIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }

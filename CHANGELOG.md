@@ -6,6 +6,26 @@
 
 ## [Unreleased] — 当前开发中
 
+### 2026-08-01 — 热门问题展示 + 暗色模式 + UI 打磨（Phase 3）
+
+**变更类型**：新增 + 修改
+
+**说明**：面试官对话页展示"其他面试官也问了"真实热门问题（从 KV 统计）；新增三态暗色模式切换（跟随系统/浅色/深色），localStorage 记忆 + 首次绘制前防闪烁（FOUC）；打磨对话页消息动画、打字光标与错误重试体验。
+
+**变更文件**：
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `src/app/api/hot-questions/route.ts` | 新增 | 公开热门问题接口：GET 从 KV 读 Top-5，KV 未配置时优雅降级为空数组，s-maxage=60 缓存 |
+| `src/components/ChatWindow.tsx` | 修改 | 挂载时拉取热门问题展示在输入区上方，点击填入输入框；消息气泡进场动画（messageIn）；AI 思考指示器改闪烁光标；错误提示加重试按钮；header 加右侧留白避让 ThemeToggle |
+| `src/components/ThemeToggle.tsx` | 新增 | 三态暗色切换（🌓 跟随系统 / ☀️ 浅色 / 🌙 深色），localStorage 记忆 |
+| `src/app/layout.tsx` | 修改 | 挂载 ThemeToggle + body 最前插入内联脚本在首次绘制前应用主题（防闪烁） |
+| `src/app/globals.css` | 修改 | `dark:` 变体从 `@media (prefers-color-scheme)` 改为 `.dark` 类驱动（`@custom-variant`）；新增 messageIn 关键帧 |
+
+**影响范围**：前端
+
+---
+
 ### 2026-07-31 — Vercel KV + Dashboard 审核后台（Phase 2）
 
 **变更类型**：新增
