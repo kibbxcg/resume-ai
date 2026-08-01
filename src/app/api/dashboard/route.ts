@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     return new Response(
       JSON.stringify({
         error:
-          "尚未创建 Vercel KV 存储，问答对无法积累。请在 Vercel 项目 → Storage → Create → KV 创建后重新部署。",
+          "未检测到 KV 环境变量（KV_REST_API_URL / KV_REST_API_TOKEN）。请确认已创建 Vercel KV 存储，并在 Settings → Environment Variables 确认这两个变量存在（勾选 Production），然后重新部署。",
       }),
       { status: 503, headers: { "Content-Type": "application/json" } }
     );
