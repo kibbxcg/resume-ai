@@ -57,7 +57,7 @@ ResumeAI 把你的个人信息变成 AI 分身——面试官打开链接，打�
 ## 🚀 一键部署
 
 <p align="center">
-  <a href="https://vercel.com/new/clone?repository-url=https://github.com/kibbxcg/resume-ai&env=LLM_PROVIDER,LLM_API_KEY&envDescription=配置你的LLM API&envLink=https://github.com/kibbxcg/resume-ai#配置说明">
+  <a href="https://vercel.com/new/clone?repository-url=https://github.com/kibbxcg/resume-ai&env=LLM_PROVIDER,LLM_API_KEY,DASHBOARD_SECRET&envDescription=%E9%85%8D%E7%BD%AE%20LLM%20API%20%28%E5%8E%82%E5%95%86%20%2F%20%E5%AF%86%E9%92%A5%20%2F%20%E5%90%8E%E5%8F%B0%E5%AF%86%E7%A0%81%29&envLink=https://github.com/kibbxcg/resume-ai#配置说明">
     <img src="https://vercel.com/button" alt="Deploy to Vercel">
   </a>
 </p>
@@ -102,15 +102,52 @@ vercel deploy
 需要设置环境变量：
 
 ```bash
-LLM_PROVIDER=deepseek    # 见下方支持的 LLM 列表
-LLM_API_KEY=sk-xxxxxxxx  # 你的 API Key
-LLM_MODEL=               # 可选，留空使用默认值
-LLM_BASE_URL=            # 可选，自定义代理地址
+LLM_PROVIDER=deepseek       # 见下方支持的 LLM 列表
+LLM_API_KEY=sk-xxxxxxxx     # 你的 API Key
+DASHBOARD_SECRET=your-secret # 后台密码（打开 /dashboard 用，自己设一个）
+LLM_MODEL=                  # 可选，留空使用默认值
+LLM_BASE_URL=               # 可选，自定义代理地址
 ```
 
 #### 4. 获得你的链接
 
 部署完成后 Vercel 会给你一个链接（如 `https://your-resume-ai.vercel.app`），**直接发给面试官**。
+
+</details>
+
+---
+
+## 🎛️ 求职者后台（查看问答对）
+
+面试官问过的问题会自动记录，你在后台**审核、收录、编辑、删除**，AI 会越用越准。
+
+部署时填过 `DASHBOARD_SECRET` 的话，直接打开：
+
+```
+https://你的域名/dashboard?key=你的DASHBOARD_SECRET
+```
+
+后台能看到：
+- ⏳ **待审核**：面试官问的新问题 + AI 初稿回答，点「收录」进入知识库
+- ✅ **已收录**：已进入 RAG 检索的问答，可编辑 / 删除
+- 🔥 **热门问题**：面试官最爱问的前 10 个
+
+<details>
+<summary>📖 部署时没填 `DASHBOARD_SECRET`？看这里（小白版）</summary>
+
+后台需要 2 样东西才能用，都免费：
+
+**1. 创建 Vercel KV 存储**（问答对存在这里）
+- Vercel 项目 → **Storage** → **Create** → **KV** → Create
+- Vercel 会自动注入 KV 相关的环境变量
+- **不建的话，问答对不会积累**
+
+**2. 设置访问密码 `DASHBOARD_SECRET`**
+- Vercel 项目 → **Settings** → **Environment Variables**
+- 添加 `DASHBOARD_SECRET`，值填一串你自己记得住的密码
+- 一键部署时填过的可以跳过这步
+
+设置完**重新部署**，再打开上面的 `https://你的域名/dashboard?key=你的密码`。
 
 </details>
 
