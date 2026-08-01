@@ -6,6 +6,23 @@
 
 ## [Unreleased] — 当前开发中
 
+### 2026-08-01 — 修复 Vercel 部署后 500（onnxruntime 原生库缺失）
+
+**变更类型**：修复
+
+**说明**：部署到 Vercel 后 `/api/chat` 报 500，错误 `libonnxruntime.so.1.14.0: cannot open shared object file`。根因：`@xenova/transformers` 依赖的 `onnxruntime-node` 原生 `.so` 文件在 serverless 打包时被剔除。双重修复：`next.config` 用 `outputFileTracingIncludes` 强制把原生文件打进部署包（恢复 RAG）；`embedding.ts` 改动态加载 + 失败降级，确保即使原生库仍缺失，对话也照常可用（回退 profile 全量注入），绝不 500。
+
+**变更文件**：
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `next.config.ts` | 修改 | `outputFileTracingIncludes` 强制包含 `onnxruntime-node/bin` 原生文件 |
+| `src/lib/embedding.ts` | 修改 | `@xenova/transformers` 改动态 import，加载失败禁用 RAG 并降级，不再拖垮整个路由 |
+
+**影响范围**：后端 / 构建配置
+
+---
+
 ### 2026-08-01 — 嵌入模型下载源自动回退（一键部署零配置）
 
 **变更类型**：修改

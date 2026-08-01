@@ -14,7 +14,7 @@
 //   来源：https://huggingface.co/Xenova/bge-small-zh-v1.5
 // ============================================================
 
-import { pipeline, env, type Tensor } from "@xenova/transformers";
+import type { Tensor } from "@xenova/transformers";
 
 // ============================================================
 // 第 1 部分：模型加载
@@ -29,12 +29,30 @@ const MODEL_NAME = "Xenova/bge-small-zh-v1.5";
 // - 高级用户可用 HF_ENDPOINT 显式固定下载源
 const DEFAULT_HOST = "https://huggingface.co";
 const FALLBACK_HOST = "https://hf-mirror.com";
-env.remoteHost = process.env.HF_ENDPOINT || DEFAULT_HOST;
 
-// 是否允许本地模型（先检查本地缓存，没有再从远程下载）
-env.allowLocalModels = true;
-// 允许从远程下载（首次使用需要下载 ~80MB）
-env.allowRemoteModels = true;
+// 动态加载 @xenova/transformers（避免静态 import 在原生库缺失时拖垮整个路由）：
+// 它在 Node 环境依赖 onnxruntime-node（编译好的 .so/.dll 原生库），
+// 某些部署环境（如 Vercel serverless）打包时可能剔除原生文件，导致模块加载失败。
+// 用动态 import + try/catch 包住：加载失败就禁用 RAG，对话照常（回退 profile 全量注入）。
+type TransformersModule = typeof import("@xenova/transformers");
+
+let transformersPromise: Promise<TransformersModule> | null = null;
+let transformersBroken = false;
+
+async function loadTransformers(): Promise<TransformersModule> {
+  if (transformersBroken) {
+    throw new Error("嵌入模块不可用（RAG 已禁用）");
+  }
+  if (!transformersPromise) {
+    transformersPromise = import("@xenova/transformers").catch((e) => {
+      transformersBroken = true; // 避免每次请求都重复尝试
+      transformersPromise = null;
+      console.warn("[embedding] @xenova/transformers 加载失败，RAG 已禁用：", e);
+      throw e;
+    });
+  }
+  return transformersPromise;
+}
 
 // 模型只加载一次（pipeline 内部有单例缓存，多次调用不会重复加载）
 // @xenova/transformers 对 feature-extraction 返回的类实例自带调用签名，
@@ -47,6 +65,13 @@ let extractorPromise: Promise<Extractor> | null = null;
 
 /** 加载模型；官方源失败时自动回退到国内镜像，保证两种网络环境都能用 */
 async function loadExtractor(): Promise<Extractor> {
+  const { pipeline, env } = await loadTransformers();
+
+  // env 来自动态导入，只能在加载后设置（不能放模块顶层）
+  env.remoteHost = process.env.HF_ENDPOINT || DEFAULT_HOST;
+  env.allowLocalModels = true; // 先检查本地缓存，没有再远程下载
+  env.allowRemoteModels = true; // 允许远程下载（首次需要 ~80MB）
+
   try {
     return await pipeline("feature-extraction", MODEL_NAME);
   } catch (error) {
