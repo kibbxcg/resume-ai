@@ -140,22 +140,23 @@ Guardrails → Persona → 全量 profile 文字 → [检索到的 Q&A 答案]
 
 ---
 
-## Phase 3：体验优化（升级已有文件）
+## Phase 3：体验优化（升级已有文件）✅ 已完成（2026-08-01）
 
-### 3.1 ChatWindow 升级 — 热门问题
+### 3.1 ChatWindow 升级 — 热门问题 ✅
 
-- 对话页底部显示"其他面试官也问了"（从 KV 读 hot questions）
-- 用户点击热门问题直接填入输入框
+- [x] 对话页底部显示"其他面试官也问了"（从 KV 读 hot questions）
+- [x] 用户点击热门问题直接填入输入框
 
-### 3.2 暗色模式完善
+### 3.2 暗色模式完善 ✅
 
-- `ThemeToggle.tsx`：手动切换按钮 + localStorage 记忆 + 跟随系统
+- [x] `ThemeToggle.tsx`：分段选择器（☀️/🌓/🌙）+ localStorage 记忆 + 跟随系统 + 防闪烁
+- [x] 补充：Hermes 暗紫主题整体换装（深空黑基底 + 紫色氛围光 + 渐变主色）
 
-### 3.3 对话页 UI 打磨
+### 3.3 对话页 UI 打磨 ✅
 
-- 消息气泡进场动画
-- AI 打字时的闪烁光标效果
-- 错误状态更友好的提示样式
+- [x] 消息气泡进场动画
+- [x] AI 打字时的闪烁光标效果
+- [x] 错误状态更友好的提示样式 + 重试按钮
 
 ---
 
@@ -180,7 +181,7 @@ Guardrails → Persona → 全量 profile 文字 → [检索到的 Q&A 答案]
 |-------|--------|------|------|---------|
 | Phase 1 | 5 | 2 | 3 | RAG 管道可运行 |
 | Phase 2 | 3 | 3 | 0 | Dashboard 可审核 |
-| Phase 3 | 1 | 0 | 1 | UI 打磨完成 |
+| Phase 3 | 7 | 2 | 5 | UI 打磨完成 ✅ |
 | Phase 4 | 0 | 0 | 0 | 开源推广 |
 
 ---
@@ -194,4 +195,6 @@ Guardrails → Persona → 全量 profile 文字 → [检索到的 Q&A 答案]
 
 ---
 
-现在从 **Phase 1.1 — embedding.ts** 开始。
+当前进度：Phase 1 ✅ · Phase 2 ✅ · Phase 3 ✅（2026-08-01）。
+
+下一步：**Phase 4 开源推广**（README 完善 + Demo GIF + Vercel Deploy Button + 发版）。

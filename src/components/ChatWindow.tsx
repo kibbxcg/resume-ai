@@ -210,11 +210,12 @@ export default function ChatWindow({ candidateName, candidateTitle }: Props) {
   return (
     <div className="flex flex-col h-dvh max-w-2xl mx-auto">
       {/* ── 顶部标题栏 ── */}
-      <header className="shrink-0 border-b border-gray-200 dark:border-gray-800 px-14 py-3 text-center">
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+      <header className="shrink-0 border-b border-gray-200 dark:border-white/10 px-14 py-3 text-center">
+        <h1 className="text-lg font-semibold bg-gradient-to-r from-violet-600 to-indigo-500
+                       dark:from-violet-400 dark:to-indigo-300 bg-clip-text text-transparent">
           {candidateName} · AI 分身
         </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{candidateTitle}</p>
+        <p className="text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400">{candidateTitle}</p>
       </header>
 
       {/* ── 消息列表 ── */}
@@ -222,19 +223,31 @@ export default function ChatWindow({ candidateName, candidateTitle }: Props) {
         {/* 空状态：还没发过消息 → 显示欢迎语和建议问题 */}
         {messages.length === 0 && (
           <div className="text-center mt-12">
-            <p className="text-gray-500 dark:text-gray-400 mb-6">
-              这是 {candidateName} 的 AI 数字分身。
-              <br />
-              你可以直接问我关于 TA 的职业经历、技术能力和项目经验。
+            {/* 发光品牌头像 */}
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600
+                            flex items-center justify-center text-white mb-5
+                            animate-[glowPulse_3s_ease-in-out_infinite]">
+              <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
+              你好，我是 {candidateName} 的 AI 分身
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
+              关于 TA 的职业经历、技术能力、项目经验，随便问。
             </p>
-            <div className="flex flex-wrap justify-center gap-2">
+            <div className="flex flex-wrap justify-center gap-2 mt-8">
               {SUGGESTED_QUESTIONS.map((q) => (
                 <button
                   key={q}
                   onClick={() => handleSuggested(q)}
-                  className="px-4 py-2 text-sm rounded-full border border-gray-300 dark:border-gray-600
-                             text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
-                             transition-colors"
+                  className="px-4 py-2 text-sm rounded-full border border-gray-200 dark:border-white/10
+                             bg-white/70 dark:bg-white/5 text-gray-700 dark:text-gray-300
+                             hover:bg-gray-50 dark:hover:bg-white/10
+                             hover:border-violet-400/50 dark:hover:border-violet-400/40
+                             hover:shadow-[0_0_12px_rgba(139,92,246,0.25)]
+                             transition-all"
                 >
                   {q}
                 </button>
@@ -253,8 +266,8 @@ export default function ChatWindow({ candidateName, candidateTitle }: Props) {
             <div
               className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed
                 ${msg.role === "user"
-                  ? "bg-blue-600 text-white rounded-br-md"
-                  : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-md"
+                  ? "bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-br-md shadow-[0_4px_16px_rgba(139,92,246,0.35)]"
+                  : "bg-gray-100 dark:bg-white/5 dark:backdrop-blur border border-transparent dark:border-white/10 text-gray-900 dark:text-gray-100 rounded-bl-md"
                 }
                 ${msg.role === "assistant" ? "prose prose-sm dark:prose-invert max-w-none" : ""}
               `}
@@ -267,7 +280,7 @@ export default function ChatWindow({ candidateName, candidateTitle }: Props) {
                   // AI 正在生成，显示闪烁光标
                   <span className="inline-flex items-center gap-1.5 text-gray-400">
                     <span
-                      className="w-0.5 h-4 bg-current animate-pulse rounded-full"
+                      className="w-0.5 h-4 bg-violet-500 animate-pulse rounded-full"
                       aria-hidden
                     />
                     <span className="text-xs">正在思考…</span>
@@ -283,7 +296,7 @@ export default function ChatWindow({ candidateName, candidateTitle }: Props) {
         {/* 错误提示 + 重试 */}
         {error && (
           <div className="text-center space-y-2">
-            <p className="inline-block px-4 py-2 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg">
+            <p className="inline-block px-4 py-2 text-sm text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-950/60 rounded-lg">
               {error}
             </p>
             <div>
@@ -308,8 +321,10 @@ export default function ChatWindow({ candidateName, candidateTitle }: Props) {
       {/* ── 其他面试官也问了（从 KV 读真实数据）── */}
       {hotQuestions.length > 0 && (
         <div className="shrink-0 px-4 pt-3 pb-1">
-          <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
-            🔥 其他面试官也问了
+          <p className="text-[11px] uppercase tracking-widest text-gray-400 dark:text-gray-500
+                         mb-2 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-violet-500" aria-hidden />
+            其他面试官也问了
           </p>
           <div className="flex gap-2 overflow-x-auto pb-1 -mb-1 scrollbar-thin">
             {hotQuestions.map((q) => (
@@ -318,14 +333,16 @@ export default function ChatWindow({ candidateName, candidateTitle }: Props) {
                 onClick={() => handleSuggested(q.question)}
                 disabled={isLoading}
                 className="shrink-0 px-3 py-1.5 text-xs rounded-full
-                           border border-gray-200 dark:border-gray-700
-                           bg-gray-50 dark:bg-gray-800
+                           border border-gray-200 dark:border-white/10
+                           bg-gray-50 dark:bg-white/5
                            text-gray-600 dark:text-gray-300
-                           hover:bg-gray-100 dark:hover:bg-gray-700
-                           transition-colors disabled:opacity-50"
+                           hover:bg-gray-100 dark:hover:bg-white/10
+                           hover:border-violet-400/50 dark:hover:border-violet-400/40
+                           hover:shadow-[0_0_10px_rgba(139,92,246,0.2)]
+                           transition-all disabled:opacity-50"
               >
                 {q.question}
-                <span className="ml-1 text-[10px] text-gray-400">×{q.count}</span>
+                <span className="ml-1 text-[10px] text-gray-400 dark:text-gray-500">×{q.count}</span>
               </button>
             ))}
           </div>
@@ -333,7 +350,7 @@ export default function ChatWindow({ candidateName, candidateTitle }: Props) {
       )}
 
       {/* ── 底部输入区 ── */}
-      <div className="shrink-0 border-t border-gray-200 dark:border-gray-800 p-4">
+      <div className="shrink-0 border-t border-gray-200 dark:border-white/10 p-4">
         <div className="flex gap-2">
           <input
             ref={inputRef}
@@ -343,19 +360,23 @@ export default function ChatWindow({ candidateName, candidateTitle }: Props) {
             onKeyDown={handleKeyDown}
             placeholder="输入你的问题..."
             disabled={isLoading}
-            className="flex-1 px-4 py-2.5 text-sm rounded-xl border border-gray-300 dark:border-gray-600
-                       bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100
+            className="flex-1 px-4 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-white/10
+                       bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-gray-100
                        placeholder-gray-400 dark:placeholder-gray-500
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                       disabled:opacity-50 disabled:cursor-not-allowed"
+                       focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500/50
+                       focus:shadow-[0_0_20px_rgba(139,92,246,0.2)]
+                       disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           />
           <button
             onClick={() => handleSend()}
             disabled={isLoading || !input.trim()}
             className="px-5 py-2.5 text-sm font-medium rounded-xl
-                       bg-blue-600 text-white hover:bg-blue-700
+                       bg-gradient-to-r from-violet-600 to-indigo-600 text-white
+                       hover:from-violet-500 hover:to-indigo-500
+                       shadow-[0_4px_14px_rgba(139,92,246,0.35)]
+                       hover:shadow-[0_4px_20px_rgba(139,92,246,0.5)]
                        disabled:opacity-50 disabled:cursor-not-allowed
-                       transition-colors"
+                       transition-all active:scale-[0.98]"
           >
             发送
           </button>

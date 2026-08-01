@@ -12,13 +12,13 @@
   <a href="#-一键部署">
     <img src="https://img.shields.io/badge/Deploy%20to-Vercel-black?style=for-the-badge&logo=vercel" alt="Deploy with Vercel">
   </a>
-  <a href="https://github.com/yourusername/resume-ai/stargazers">
-    <img src="https://img.shields.io/github/stars/yourusername/resume-ai?style=for-the-badge" alt="Stars">
+  <a href="https://github.com/kibbxcg/resume-ai/stargazers">
+    <img src="https://img.shields.io/github/stars/kibbxcg/resume-ai?style=for-the-badge" alt="Stars">
   </a>
-  <a href="https://github.com/yourusername/resume-ai/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/yourusername/resume-ai?style=for-the-badge" alt="License">
+  <a href="https://github.com/kibbxcg/resume-ai/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/kibbxcg/resume-ai?style=for-the-badge" alt="License">
   </a>
-  <a href="https://github.com/yourusername/resume-ai/issues">
+  <a href="https://github.com/kibbxcg/resume-ai/issues">
     <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge" alt="PRs Welcome">
   </a>
 </p>
@@ -57,7 +57,7 @@ ResumeAI 把你的个人信息变成 AI 分身——面试官打开链接，打�
 ## 🚀 一键部署
 
 <p align="center">
-  <a href="https://vercel.com/new/clone?repository-url=https://github.com/yourusername/resume-ai&env=LLM_PROVIDER,LLM_API_KEY&envDescription=配置你的LLM API&envLink=https://github.com/yourusername/resume-ai#配置说明">
+  <a href="https://vercel.com/new/clone?repository-url=https://github.com/kibbxcg/resume-ai&env=LLM_PROVIDER,LLM_API_KEY&envDescription=配置你的LLM API&envLink=https://github.com/kibbxcg/resume-ai#配置说明">
     <img src="https://vercel.com/button" alt="Deploy to Vercel">
   </a>
 </p>
@@ -205,7 +205,7 @@ resume-ai/
 
 ```bash
 # 1. 克隆
-git clone https://github.com/yourusername/resume-ai.git
+git clone https://github.com/kibbxcg/resume-ai.git
 cd resume-ai
 
 # 2. 安装依赖
@@ -231,15 +231,15 @@ npm run dev
 
 ### 贡献者展示
 
-如果你部署了自己的 AI 分身，欢迎在 [Show & Tell](https://github.com/yourusername/resume-ai/discussions/1) 里分享你的链接！
+如果你部署了自己的 AI 分身，欢迎在 [Show & Tell](https://github.com/kibbxcg/resume-ai/discussions/1) 里分享你的链接！
 
 ---
 
 ## 📊 Star History
 
 <p align="center">
-  <a href="https://star-history.com/#yourusername/resume-ai&Date">
-    <img src="https://api.star-history.com/svg?repos=yourusername/resume-ai&type=Date" alt="Star History Chart">
+  <a href="https://star-history.com/#kibbxcg/resume-ai&Date">
+    <img src="https://api.star-history.com/svg?repos=kibbxcg/resume-ai&type=Date" alt="Star History Chart">
   </a>
 </p>
 
@@ -247,7 +247,7 @@ npm run dev
 
 ## 📜 License
 
-MIT © [Your Name](https://github.com/yourusername)
+MIT © [kibbxcg](https://github.com/kibbxcg)
 
 ---
 

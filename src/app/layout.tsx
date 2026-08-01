@@ -16,8 +16,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // suppressHydrationWarning：内联主题脚本会在水合前给 <html> 加 .dark 类，
+  // React 会因此认为服务端/客户端类名不一致，这里明确告知它跳过该元素比对。
   return (
-    <html lang="zh-CN" className="h-full antialiased">
+    <html lang="zh-CN" className="h-full antialiased" suppressHydrationWarning>
       <body className="min-h-full flex flex-col">
         {/* 放在 body 最前面：同步执行，浏览器会先执行再绘制，从而避免闪白 */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />

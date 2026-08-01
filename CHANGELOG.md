@@ -26,6 +26,27 @@
 
 ---
 
+### 2026-08-01 — Hermes 暗紫主题 + 暗色模式修复
+
+**变更类型**：修改
+
+**说明**：对话页整体换装"Hermes 暗紫主题"——深空黑基底 + 紫色氛围光 + 紫→靛渐变主色 + 玻璃面板气泡。同时修复暗色模式的两处体验问题：水合告警（FOUC 脚本改 `<html>` 类名导致的 hydration mismatch，加 `suppressHydrationWarning` 解决）和主题切换需点两下（三态循环按钮改为分段选择器，点选直达）。
+
+**变更文件**：
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `src/app/globals.css` | 修改 | 暗色基底改为深空黑 `#0a0a0f`；新增紫色细滚动条；`glowPulse` 头像呼吸动画 |
+| `src/app/page.tsx` | 修改 | 新增紫色氛围光背景（双光晕，浅/深色各保留微弱品牌色） |
+| `src/components/ChatWindow.tsx` | 修改 | 渐变标题、紫渐变用户气泡、玻璃面板 AI 气泡、紫色光晕输入框、空状态重设计、热门问题区去 emoji |
+| `src/components/ThemeToggle.tsx` | 修改 | 三态循环按钮改为分段选择器（☀️/🌓/🌙），紫色高亮当前项 |
+| `src/app/layout.tsx` | 修改 | `<html>` 加 `suppressHydrationWarning`，消除主题脚本引起的水合告警 |
+| `src/app/dashboard/page.tsx` | 修改 | 暗色面板对齐新配色（玻璃面板 + 细边框） |
+
+**影响范围**：前端
+
+---
+
 ### 2026-07-31 — Vercel KV + Dashboard 审核后台（Phase 2）
 
 **变更类型**：新增

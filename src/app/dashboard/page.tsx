@@ -200,7 +200,7 @@ export default function DashboardPage() {
             {data.hotQuestions.map((q) => (
               <div
                 key={q.question}
-                className="flex justify-between text-sm px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                className="flex justify-between text-sm px-3 py-2 bg-gray-50 dark:bg-white/5 rounded-lg"
               >
                 <span>{q.question}</span>
                 <span className="text-gray-400">{q.count} 次</span>
@@ -274,7 +274,7 @@ export default function DashboardPage() {
             {data.curated.map((item) => (
               <div
                 key={item.id}
-                className="border border-gray-200 dark:border-gray-700 rounded-xl p-4"
+                className="border border-gray-200 dark:border-white/10 rounded-xl p-4"
               >
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -310,14 +310,14 @@ export default function DashboardPage() {
       {/* 编辑弹窗 */}
       {editing && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-lg space-y-4">
+          <div className="bg-white dark:bg-[#12121a] rounded-2xl p-6 w-full max-w-lg space-y-4">
             <h3 className="text-lg font-semibold">编辑问答</h3>
             <div>
               <label className="block text-sm font-medium mb-1">问题</label>
               <input
                 value={editQuestion}
                 onChange={(e) => setEditQuestion(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5"
               />
             </div>
             <div>
@@ -326,13 +326,13 @@ export default function DashboardPage() {
                 value={editAnswer}
                 onChange={(e) => setEditAnswer(e.target.value)}
                 rows={6}
-                className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 resize-none"
+                className="w-full px-3 py-2 text-sm rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 resize-none"
               />
             </div>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={closeEditor}
-                className="px-4 py-2 text-sm rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                className="px-4 py-2 text-sm rounded-xl bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/15"
               >
                 取消
               </button>

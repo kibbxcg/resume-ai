@@ -6,13 +6,13 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fafafc; /* 冷调微白，比纯白更柔和 */
+  --foreground: #17171a;
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: #0a0a0f; /* 深空黑带蓝调（Hermes 暗紫主题基底） */
+  --foreground: #e8e6f0; /* 冷紫白文字 */
 }
 
 @theme inline {
@@ -29,6 +29,26 @@ body {
   color: var(--foreground);
 }
 
+/* 细滚动条（紫色点缀，配合暗紫主题） */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.3) transparent;
+}
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.25);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.4);
+}
+
 /* 消息气泡进场动画：从下方淡入 + 轻微缩放 */
 @keyframes messageIn {
   from {
@@ -38,5 +58,16 @@ body {
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+/* 头像光晕呼吸（空状态品牌头像） */
+@keyframes glowPulse {
+  0%,
+  100% {
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.35);
+  }
+  50% {
+    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.6);
   }
 }

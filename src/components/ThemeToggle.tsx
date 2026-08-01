@@ -1,12 +1,16 @@
 "use client";
 
 // ============================================================
-// ThemeToggle — 暗色模式切换按钮
+// ThemeToggle — 暗色模式切换（分段选择器）
 //
-// 三种模式循环切换：
-//   🌓 跟随系统 → ☀️ 浅色 → 🌙 深色 → 回到跟随系统
+// 三个选项，点哪个直接切换，无循环歧义：
+//   ☀️ 浅色   🌓 跟随系统   🌙 深色
 //
-// 状态持久化到 localStorage（键名 "theme"）。
+// 之前是"三态循环按钮"，存在"点了但颜色不变"的过渡态
+// （系统为深色时，深色→跟随系统 无视觉变化），
+// 改为分段选择器后彻底消除该问题。
+//
+// 选择持久化到 localStorage（键名 "theme"）。
 // 首次绘制前由 layout.tsx 的内联脚本读取并应用，避免闪烁（FOUC）。
 // ============================================================
 
@@ -58,30 +62,38 @@ export default function ThemeToggle() {
     return () => mq.removeEventListener("change", handler);
   }, [mode]);
 
-  // 计算当前模式 + 下一个模式（循环）
-  const currentIndex = Math.max(MODES.findIndex((m) => m.key === mode), 0);
-  const current = MODES[currentIndex];
-  const next = MODES[(currentIndex + 1) % MODES.length];
-
-  function handleClick() {
-    const nextMode = next.key;
-    setMode(nextMode);
-    localStorage.setItem("theme", nextMode);
-    applyTheme(nextMode);
+  // 直接选择某个模式（不再循环，点击必有明确反馈）
+  function select(modeKey: ThemeMode) {
+    setMode(modeKey);
+    localStorage.setItem("theme", modeKey);
+    applyTheme(modeKey);
   }
 
   return (
-    <button
-      onClick={handleClick}
-      title={`主题：${current.label}，点击切换为${next.label}`}
-      aria-label={`当前主题：${current.label}`}
-      className="fixed top-4 right-4 z-50 flex items-center justify-center
-                 w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700
-                 bg-white/80 dark:bg-gray-900/80 backdrop-blur
-                 text-base hover:bg-gray-100 dark:hover:bg-gray-800
-                 transition-colors cursor-pointer select-none"
+    <div
+      className="fixed top-4 right-4 z-50 flex items-center rounded-full
+                 border border-gray-200 dark:border-white/10
+                 bg-white/80 dark:bg-[#14141d]/80 backdrop-blur overflow-hidden"
+      role="group"
+      aria-label="主题切换"
     >
-      <span aria-hidden>{current.icon}</span>
-    </button>
+      {MODES.map((m) => (
+        <button
+          key={m.key}
+          onClick={() => select(m.key)}
+          title={m.label}
+          aria-label={m.label}
+          aria-pressed={mode === m.key}
+          className={`px-2.5 py-1.5 text-sm transition-colors select-none cursor-pointer
+            ${
+              mode === m.key
+                ? "bg-violet-500/15 dark:bg-violet-500/25 text-violet-700 dark:text-violet-300"
+                : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-violet-600 dark:hover:text-violet-300"
+            }`}
+        >
+          <span aria-hidden>{m.icon}</span>
+        </button>
+      ))}
+    </div>
   );
 }
