@@ -6,6 +6,25 @@
 
 ## [Unreleased] — 当前开发中
 
+### 2026-08-01 — 修复 Vercel 部署后"请求失败"
+
+**变更类型**：修复
+
+**说明**：修复部署到 Vercel 后提问返回"请求失败"的问题。根因是冷启动时下载 80MB 嵌入模型超过 Vercel 函数默认 10s 超时，返回非 JSON 错误页。三项修复：延长函数超时、模型源可配置（海外部署用官方源）、RAG/KV 故障时降级回 profile 全量注入保证对话始终可用。
+
+**变更文件**：
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `vercel.json` | 新增 | chat/dashboard 函数 maxDuration 提升到 60s |
+| `src/lib/embedding.ts` | 修改 | 模型下载源改为 `HF_ENDPOINT` 环境变量可配，默认 hf-mirror.com |
+| `src/app/api/chat/route.ts` | 修改 | YAML/KV 加载、语义检索加 try/catch，失败时降级 profile-only 不阻断对话 |
+| `.env.example` | 修改 | 新增 HF_ENDPOINT 说明 |
+
+**影响范围**：后端 / 配置
+
+---
+
 ### 2026-08-01 — README 修正过时内容
 
 **变更类型**：修改

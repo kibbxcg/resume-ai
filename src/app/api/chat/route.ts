@@ -20,10 +20,17 @@ let curatedQACache: QAItem[] | null = null;
 
 async function getCuratedQA(): Promise<QAItem[]> {
   if (!curatedQACache) {
-    // 同时从 YAML 和 KV 加载
+    // 同时从 YAML 和 KV 加载。
+    // 任一失败只警告、不阻断——RAG 是增强能力，挂掉也要保证对话可用（回退 profile 全量注入）。
     const [yamlItems, kvItems] = await Promise.all([
-      loadCuratedQA(),
-      loadCuratedQAFromKV(),
+      loadCuratedQA().catch((e) => {
+        console.warn("[RAG] curated_qa.yaml 加载失败，跳过：", e);
+        return [] as QAItem[];
+      }),
+      loadCuratedQAFromKV().catch((e) => {
+        console.warn("[RAG] KV 加载失败（可能未配置 Vercel KV），跳过：", e);
+        return [] as QAItem[];
+      }),
     ]);
 
     // 合并去重（KV 优先，YAML 同名问题被 KV 覆盖）
@@ -75,10 +82,15 @@ export async function POST(request: NextRequest) {
 
     // ── 1.3 RAG 检索 ──
     const curatedQA = await getCuratedQA();
-    const ragResults =
-      curatedQA.length > 0
-        ? await searchCuratedQA(userMessage, curatedQA)
-        : [];
+    let ragResults: Array<{ item: QAItem; score: number }> = [];
+    if (curatedQA.length > 0) {
+      try {
+        ragResults = await searchCuratedQA(userMessage, curatedQA);
+      } catch (e) {
+        // 检索失败（如嵌入模型异常）→ 回退 profile 全量注入，不阻断对话
+        console.warn("[RAG] 语义检索失败，回退 profile 全量注入：", e);
+      }
+    }
 
     const ragHits: RAGHit[] = ragResults.map((r) => ({
       question: r.item.question,

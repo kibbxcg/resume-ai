@@ -23,9 +23,11 @@ import { pipeline, env, type Tensor } from "@xenova/transformers";
 // 指定模型名（Xenova 转换的 ONNX 版本，可在浏览器/Node.js 中运行）
 const MODEL_NAME = "Xenova/bge-small-zh-v1.5";
 
-// 使用 HuggingFace 国内镜像，避免模型下载被墙
-// 默认是 huggingface.co，国内无法访问
-env.remoteHost = "https://hf-mirror.com";
+// 模型下载源：
+// - 本地/国内部署默认走 hf-mirror.com（国内镜像，规避 huggingface.co 被墙）
+// - 部署到海外服务器（如 Vercel）时，建议设 HF_ENDPOINT=https://huggingface.co，
+//   官方源在海外下载更快
+env.remoteHost = process.env.HF_ENDPOINT || "https://hf-mirror.com";
 
 // 是否允许本地模型（先检查本地缓存，没有再从远程下载）
 env.allowLocalModels = true;
