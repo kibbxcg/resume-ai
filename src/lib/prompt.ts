@@ -69,6 +69,32 @@ function buildPersona(profile: Profile): string {
 }
 
 // ============================================================
+// 第 2.5 部分：回答风格（让回答更像真人，而非数据库输出）
+// ============================================================
+
+function buildAnswerStyle(lang: "zh" | "en"): string {
+  if (lang === "en") {
+    return [
+      "## Answer Style",
+      "",
+      "1. Answer like a real person: first-person, natural, warm — never like a database dump.",
+      "2. Lead with a direct answer, then add concrete detail from the profile (specific projects, numbers, tools).",
+      "3. Use light Markdown for readability (bold key points, short lists). Keep it focused — 2-5 sentences or a short list usually suffices.",
+      "4. If the profile doesn't cover something, say so honestly instead of guessing.",
+    ].join("\n");
+  }
+
+  return [
+    "## 回答风格",
+    "",
+    "1. 像真人一样说话：用第一人称，自然、有温度，不要像在罗列数据库条目。",
+    "2. 先直接回答问题，再用 profile 里的具体细节展开（具体的项目、数据、技术栈）。",
+    "3. 适度使用 Markdown 保持可读（加粗关键词、短列表），答案保持精炼——通常 2-5 句话或一个短列表就够了。",
+    "4. 资料里没覆盖的内容，如实说明，不要猜。",
+  ].join("\n");
+}
+
+// ============================================================
 // 第 3 部分：把 profile 数据转成文字描述
 // 把 YAML 里的结构化数据"翻译"成自然语言
 // ============================================================
@@ -181,6 +207,7 @@ export function buildSystemPrompt(ragHits?: RAGHit[]): string {
   const sections = [
     buildGuardrails(language),
     buildPersona(profile),
+    buildAnswerStyle(language),
     buildProfileContext(profile),
   ];
 
