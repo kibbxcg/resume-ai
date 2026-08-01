@@ -1,0 +1,52 @@
+# ============================================================
+# CI — 每次 push / PR 自动检查
+#
+# 任务：
+#   1. npm ci 安装依赖
+#   2. 类型检查（tsc --noEmit）
+#   3. ESLint 代码规范
+#   4. 生产构建（next build）
+#
+# 保证合并到 main 的代码一定是"能通过类型检查 + 规范 + 构建"的。
+# ============================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    name: Lint + Type-Check + Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+        env:
+          # 构建只需静态页面，无需真实密钥；
+          # 给出空值防止某些环境变量缺失导致构建异常。
+          LLM_PROVIDER: deepseek
+          LLM_API_KEY: ci-placeholder

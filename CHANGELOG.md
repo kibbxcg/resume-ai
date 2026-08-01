@@ -47,6 +47,28 @@
 
 ---
 
+### 2026-08-01 — 开源准备：CI + 贡献指南 + Demo 占位图（Phase 4.1）
+
+**变更类型**：新增 + 修复
+
+**说明**：补齐 GitHub 仓库门面——新增 CI 自动检查（lint + 类型 + 构建）、重写贡献指南、Demo 占位图、README 加 FAQ；顺手修掉遗留 lint 错误，让 CI 全绿。
+
+**变更文件**：
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `.github/workflows/ci.yml` | 新增 | 每次 push/PR 自动跑 lint + tsc + build |
+| `CONTRIBUTING.md` | 重写 | 原本是空文件，补全贡献指南（开发环境 / PR 流程 / 代码规范） |
+| `docs/images/demo.svg` | 新增 | Hermes 暗紫风格的 Demo 占位图（真实 GIF 录制后替换） |
+| `README.md` | 修改 | Demo 图引用改为 SVG；新增 FAQ 板块 |
+| `src/lib/embedding.ts` | 修改 | 用 `Tensor` 类型接口替代散落 `any`，消除 lint 错误 |
+| `src/app/dashboard/page.tsx` | 修改 | `set-state-in-effect` 加 eslint-disable 注释说明 |
+| `src/app/api/dashboard/route.ts` | 修改 | 移除未使用的类型导入 |
+
+**影响范围**：CI / 文档 / 后端
+
+---
+
 ### 2026-07-31 — Vercel KV + Dashboard 审核后台（Phase 2）
 
 **变更类型**：新增

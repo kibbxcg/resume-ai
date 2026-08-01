@@ -14,7 +14,7 @@
 //   来源：https://huggingface.co/Xenova/bge-small-zh-v1.5
 // ============================================================
 
-import { pipeline, env } from "@xenova/transformers";
+import { pipeline, env, type Tensor } from "@xenova/transformers";
 
 // ============================================================
 // 第 1 部分：模型加载
@@ -33,10 +33,15 @@ env.allowLocalModels = true;
 env.allowRemoteModels = true;
 
 // 模型只加载一次（pipeline 内部有单例缓存，多次调用不会重复加载）
-// @xenova/transformers 的 TypeScript 类型不完整，用 any 绕过
-let extractorPromise: Promise<any> | null = null;
+// @xenova/transformers 对 feature-extraction 返回的类实例自带调用签名，
+// 这里声明一个最小调用接口（仅用到 text 参数），避免散落 any
+interface Extractor {
+  (text: string): Promise<Tensor>;
+}
 
-function getExtractor(): Promise<any> {
+let extractorPromise: Promise<Extractor> | null = null;
+
+function getExtractor(): Promise<Extractor> {
   if (!extractorPromise) {
     extractorPromise = pipeline("feature-extraction", MODEL_NAME);
   }
@@ -60,8 +65,8 @@ export async function embed(text: string): Promise<number[]> {
   // Tensor 形状：[1, seq_len, 512]
   // 需要手工做均值池化，把每个 token 的向量平均成一个句子级向量
   const output = await extractor(text);
-  const data = (output as any).data as Float32Array;
-  const dims = (output as any).dims as number[]; // [1, seq_len, 512]
+  const data = output.data as Float32Array; // Tensor.data 类型是 DataArray，运行时为 Float32Array
+  const dims = output.dims; // [1, seq_len, 512]
 
   const seqLen = dims[1]; // token 数量
   const hiddenSize = dims[2]; // 512

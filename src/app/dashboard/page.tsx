@@ -67,6 +67,8 @@ export default function DashboardPage() {
   // ── 从 URL 读 key ──
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    // 必须在水合后读 URL 参数（SSR 阶段没有 window），故关闭该 lint 规则
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setKey(params.get("key") || "");
   }, []);
 
@@ -93,6 +95,8 @@ export default function DashboardPage() {
   }, [key]);
 
   useEffect(() => {
+    // fetchData 内部是异步 setState，且 key 来自 URL（水合后才有）
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, [fetchData]);
 

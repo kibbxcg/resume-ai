@@ -17,8 +17,6 @@ import {
   deleteCuratedQA,
   deletePendingQA,
   getHotQuestions,
-  type PendingQA,
-  type CuratedQA,
 } from "@/lib/kv";
 
 // ============================================================

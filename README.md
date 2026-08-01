@@ -5,7 +5,7 @@
 > 不需要后端、不需要数据库、不需要服务器——Fork、填配置、部署，三步搞定。
 
 <p align="center">
-  <img src="docs/images/demo.gif" alt="Demo" width="600">
+  <img src="docs/images/demo.svg" alt="Demo" width="600">
 </p>
 
 <p align="center">
@@ -220,6 +220,28 @@ cp profile.example.yaml profile.yaml
 npm run dev
 # 打开 http://localhost:3000
 ```
+
+---
+
+## ❓ 常见问题（FAQ）
+
+**需要翻墙吗？**
+不需要。嵌入模型走 `hf-mirror.com` 国内镜像，Google Fonts 已替换为系统字体。
+
+**需要数据库吗？**
+不需要。默认零配置即可对话；可选配 Vercel KV（免费 256MB）实现"自进化知识库"。
+
+**怎么换大模型？**
+只改两个环境变量：`LLM_PROVIDER`（厂商）+ `LLM_API_KEY`（密钥）。
+
+**面试官什么问题都能答吗？**
+不能。AI 只基于你的 `profile.yaml` 回答，简历外的问题会礼貌拒答（内置安全护栏）。
+
+**数据安全吗？**
+面试官的对话只存浏览器 Session Storage（刷新即焚），不收集身份信息。
+
+**可以商用吗？**
+可以，MIT 协议，自由使用。
 
 ---
 

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans','PingFang SC','Microsoft YaHei',sans-serif">
+  <defs>
+    <linearGradient id="violet" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="title" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#818cf8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="0%" r="75%">
+      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 背景 + 紫色氛围光 -->
+  <rect width="800" height="500" fill="#0a0a0f"/>
+  <rect width="800" height="500" fill="url(#glow)"/>
+
+  <!-- 顶部标题栏 -->
+  <line x1="0" y1="58" x2="800" y2="58" stroke="#ffffff" stroke-opacity="0.08"/>
+  <text x="400" y="32" text-anchor="middle" font-size="17" font-weight="600" fill="url(#title)">张三 · AI 分身</text>
+  <text x="400" y="50" text-anchor="middle" font-size="10" letter-spacing="3" fill="#9ca3af">全栈工程师</text>
+
+  <!-- AI 气泡 1（玻璃面板） -->
+  <rect x="56" y="86" width="430" height="84" rx="16" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.1"/>
+  <text x="80" y="114" font-size="13" fill="#e8e6f0">
+    <tspan x="80" dy="0">你好，我是张三的 AI 数字分身。</tspan>
+    <tspan x="80" dy="22">你可以问我关于我的职业经历、</tspan>
+    <tspan x="80" dy="22">技术能力和项目经验。</tspan>
+  </text>
+
+  <!-- 用户气泡（紫渐变） -->
+  <rect x="424" y="200" width="320" height="52" rx="16" fill="url(#violet)"/>
+  <text x="584" y="222" text-anchor="middle" font-size="13" fill="#ffffff">你最有挑战性的项目是哪个？</text>
+  <path d="M 740 220 L 752 224 L 740 230 Z" fill="#6366f1"/>
+
+  <!-- AI 气泡 2（玻璃面板） -->
+  <rect x="56" y="282" width="470" height="76" rx="16" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.1"/>
+  <text x="80" y="308" font-size="13" fill="#e8e6f0">
+    <tspan x="80" dy="0">我认为是 ResumeAI——把简历变成</tspan>
+    <tspan x="80" dy="22">一个能对话的 AI 分身，核心用到了</tspan>
+    <tspan x="80" dy="22">本地嵌入检索（RAG）+ SSE 流式回复。</tspan>
+  </text>
+
+  <!-- 底部输入区 -->
+  <rect x="56" y="450" width="628" height="36" rx="18" fill="#ffffff" fill-opacity="0.05" stroke="#ffffff" stroke-opacity="0.1"/>
+  <text x="80" y="473" font-size="12" fill="#6b7280">输入你的问题...</text>
+  <rect x="694" y="450" width="52" height="36" rx="10" fill="url(#violet)"/>
+  <text x="720" y="473" text-anchor="middle" font-size="13" fill="#ffffff">发送</text>
+
+  <!-- 录制中徽章 -->
+  <rect x="600" y="14" width="184" height="26" rx="13" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12"/>
+  <text x="692" y="32" text-anchor="middle" font-size="11" fill="#a78bfa">🎬 Demo 录制中 · 敬请期待</text>
+</svg>
