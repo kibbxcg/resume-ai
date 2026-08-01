@@ -45,6 +45,17 @@ export async function GET(request: NextRequest) {
   const key = request.nextUrl.searchParams.get("key");
   if (!checkAuth(key)) return unauthResponse();
 
+  // KV 未配置（未创建 Vercel KV 存储）时，给出明确指引而不是笼统报错
+  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+    return new Response(
+      JSON.stringify({
+        error:
+          "尚未创建 Vercel KV 存储，问答对无法积累。请在 Vercel 项目 → Storage → Create → KV 创建后重新部署。",
+      }),
+      { status: 503, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
   try {
     const [pending, curated, hotQuestions] = await Promise.all([
       getPendingQAs(),

@@ -83,7 +83,10 @@ export default function DashboardPage() {
         setError("未授权访问，请检查 URL 中的 key 参数。");
         setData(null);
       } else if (!res.ok) {
-        setError("加载失败，请重试。");
+        // 读取服务端返回的具体错误（如"未创建 KV 存储"的指引）
+        const err = await res.json().catch(() => ({ error: "加载失败，请重试。" }));
+        setError(err.error || `加载失败 (${res.status})`);
+        setData(null);
       } else {
         setData(await res.json());
       }
