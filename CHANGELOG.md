@@ -6,6 +6,22 @@
 
 ## [Unreleased] — 当前开发中
 
+### 2026-08-01 — README 修正过时内容
+
+**变更类型**：修改
+
+**说明**：修正 README 中遗留的旧版本描述：Edge Runtime → Node.js Runtime、补全自进化 RAG 流程与设计亮点、技术栈表格更新（Next.js 16 / 嵌入模型 / Vercel KV）、项目结构对齐实际文件（删除不存在的 MessageBubble/ChatInput，补充 dashboard、hot-questions、ThemeToggle 等）、FAQ 隐私表述修正。
+
+**变更文件**：
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `README.md` | 修改 | 过时内容全面修正，与实际架构对齐 |
+
+**影响范围**：文档
+
+---
+
 ### 2026-08-01 — 热门问题展示 + 暗色模式 + UI 打磨（Phase 3）
 
 **变更类型**：新增 + 修改

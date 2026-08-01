@@ -43,14 +43,14 @@ ResumeAI 把你的个人信息变成 AI 分身——面试官打开链接，打�
 
 | 面试官体验到 | 感知到你的能力 |
 |-------------|---------------|
-| 打开链接秒开，对话丝滑流式回复 | **全栈工程能力**——Next.js + Edge Runtime + SSE |
+| 打开链接秒开，对话丝滑流式回复 | **全栈工程能力**——Next.js + SSE 流式 + 本地嵌入 RAG |
 | DevTools 里看不到任何 API Key 或敏感信息 | **安全意识**——服务端代理、密钥隔离 |
 | 问简历外的问题，AI 礼貌拒答而非编造 | **AI 工程素养**——Prompt 工程、Guardrails 设计 |
 | 手机上打开体验和桌面端一样好 | **产品思维**——响应式设计、触摸优化 |
-| 链接从全球任何地方打开都快 | **DevOps 实践**——Edge CDN、零成本自动扩缩容 |
+| 链接从全球任何地方打开都快 | **DevOps 实践**——Vercel 全球 CDN、零成本自动扩缩容 |
 
 > 💡 **在简历里这样写**：
-> *"设计并开源 AI 简历分身项目（GitHub XXX Stars），基于 Next.js + Edge Runtime 实现 RAG-lite 架构、服务端密钥隔离与 SSE 流式对话。项目本身作为全栈 + AI 工程能力的可验证作品。"*
+> *"设计并开源 AI 简历分身项目（GitHub XXX Stars），基于 Next.js 实现自进化 RAG（本地嵌入检索 + SSE 流式对话）、服务端密钥隔离与安全护栏。项目本身作为全栈 + AI 工程能力的可验证作品。"*
 
 ---
 
@@ -140,21 +140,26 @@ LLM_BASE_URL=            # 可选，自定义代理地址
 前端 → POST /api/chat
     ↓
 Next.js Route Handler（服务端）：
-    1. 读取 profile.yaml
-    2. 拼接 Guardrails + Persona + Profile → System Prompt
-    3. 追加面试官问题
-    4. 使用环境变量中的 API Key 调用 LLM
-    5. 流式将响应字节推送回前端
+    1. 本地嵌入模型把问题向量化
+    2. 语义检索已收录 Q&A（RAG）→ 命中则注入标准答案
+    3. 未命中 → 注入 profile.yaml 全量信息兜底
+    4. 调用 LLM 生成回答（API Key 走服务端环境变量）
+    5. 未命中时自动记录该问答 → 等待求职者审核
+    6. 流式将响应字节推送回前端
     ↓
 前端逐字渲染 Markdown（代码自动高亮）
+    ↓
+求职者在 /dashboard 审核收录 → 知识库自进化，越用越准
 ```
 
 ### 设计亮点
 
-- **RAG-lite**：不依赖向量数据库，YAML 全量注入 System Prompt（Token 预算 ≤ 4K）。简单、够用。
+- **自进化 RAG**：本地嵌入模型（bge-small-zh-v1.5）语义检索已收录 Q&A，命中即用标准答案；未命中回退 `profile.yaml` 全量注入。面试官问过的精彩问答，经你审核收录后反向提升 AI 作答质量——**越用越准**。
+- **零向量数据库**：不依赖 Pinecone / ChromaDB 等外部向量库，本地嵌入 + 内存余弦检索，几十条问答毫秒级完成。
 - **密钥隔离**：API Key 只存在于服务端环境变量，浏览器网络请求中绝不可见。
 - **安全护栏**：多层 Prompt 防御——拒答越狱、拒编经历、拒透系统信息。
-- **无状态**：对话历史存在面试官浏览器 Session Storage，刷新即焚，零隐私风险。
+- **流式体验**：SSE 逐字输出 + 多轮上下文记忆，对话丝滑如真人。
+- **隐私友好**：面试官对话历史只存浏览器内存（刷新即焚）；知识库只记录问答文本，不收集身份信息。
 
 ---
 
@@ -162,11 +167,13 @@ Next.js Route Handler（服务端）：
 
 | 层 | 技术 | 为什么选它 |
 |----|------|-----------|
-| 框架 | Next.js 14+ (App Router) | RSC + Route Handler 一站式 |
+| 框架 | Next.js 16 (App Router) | RSC + Route Handler 一站式 |
 | 语言 | TypeScript (strict) | 类型安全 = 运行时少 bug |
-| 样式 | TailwindCSS | 原子化 CSS，零运行时 |
-| 部署 | Vercel Edge Runtime | 全球 CDN，冷启动 < 800ms |
-| LLM | OpenAI / DeepSeek / 智谱... | 适配器模式，切换零成本 |
+| 样式 | TailwindCSS 4 | 原子化 CSS，零运行时 |
+| 嵌入 | @xenova/transformers + bge-small-zh-v1.5 | 本地运行，零 API 费用，中文语义精准 |
+| 存储 | Vercel KV（可选） | 知识库持久化，免费层 256MB |
+| 部署 | Vercel (Node.js Runtime) | 全球 CDN，零运维，自动扩缩容 |
+| LLM | OpenAI / DeepSeek / 智谱 / 通义 / Moonshot | 适配器模式，切换零成本 |
 | 校验 | Zod | 运行时 Schema 校验 |
 
 ---
@@ -177,24 +184,33 @@ Next.js Route Handler（服务端）：
 resume-ai/
 ├── README.md                ← 你在这
 ├── profile.example.yaml     ← 示例配置（复制为 profile.yaml）
+├── curated_qa.example.yaml  ← 预置问答模板（RAG 知识库冷启动）
 ├── .env.example             ← 环境变量模板
 ├── src/
 │   ├── app/
 │   │   ├── page.tsx         ← 面试官对话页面
-│   │   ├── layout.tsx       ← 根布局（OG 标签）
-│   │   └── api/chat/
-│   │       └── route.ts     ← SSE 流式代理（安全边界）
+│   │   ├── layout.tsx       ← 根布局（主题切换 + 防闪烁脚本）
+│   │   ├── dashboard/
+│   │   │   └── page.tsx     ← 求职者审核后台
+│   │   └── api/
+│   │       ├── chat/route.ts        ← SSE 流式代理 + RAG 检索
+│   │       ├── dashboard/route.ts   ← 审核 API（收录/编辑/删除）
+│   │       └── hot-questions/       ← 热门问题接口
 │   ├── components/
-│   │   ├── ChatWindow.tsx   ← 对话窗口
-│   │   ├── MessageBubble.tsx← 消息气泡（Markdown + 代码高亮）
-│   │   └── ChatInput.tsx    ← 输入框（移动端适配）
+│   │   ├── ChatWindow.tsx   ← 对话窗口（含热门问题）
+│   │   └── ThemeToggle.tsx  ← 暗色模式切换
 │   └── lib/
-│       ├── llm/             ← LLM Provider 抽象层
+│       ├── embedding.ts     ← 本地嵌入模型 + 余弦检索
+│       ├── knowledge.ts     ← 知识库加载
+│       ├── kv.ts            ← Vercel KV 封装
+│       ├── llm/provider.ts  ← LLM 多厂商抽象层
 │       ├── profile.ts       ← YAML 加载 + Zod 校验
 │       └── prompt.ts        ← System Prompt 构建 + Guardrails
 ├── docs/
 │   ├── REQUIREMENTS.md      ← 详细需求文档
-│   └── prd.md               ← 产品需求文档
+│   ├── IMPLEMENTATION_PLAN.md ← 实现方案
+│   ├── TROUBLESHOOTING.md   ← 排障指南
+│   └── images/              ← README 配图
 └── .github/workflows/
     └── ci.yml               ← 自动 lint + type-check + build
 ```
@@ -235,10 +251,10 @@ npm run dev
 只改两个环境变量：`LLM_PROVIDER`（厂商）+ `LLM_API_KEY`（密钥）。
 
 **面试官什么问题都能答吗？**
-不能。AI 只基于你的 `profile.yaml` 回答，简历外的问题会礼貌拒答（内置安全护栏）。
+不能。AI 只基于你的 `profile.yaml` 和已收录问答回答，简历外的问题会礼貌拒答（内置安全护栏）。
 
 **数据安全吗？**
-面试官的对话只存浏览器 Session Storage（刷新即焚），不收集身份信息。
+面试官的对话历史只存浏览器内存（刷新即焚）；知识库只记录问答文本，不收集身份信息。
 
 **可以商用吗？**
 可以，MIT 协议，自由使用。
