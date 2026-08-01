@@ -43,6 +43,18 @@ function unauthResponse(): Response {
 
 export async function GET(request: NextRequest) {
   const key = request.nextUrl.searchParams.get("key");
+
+  // DASHBOARD_SECRET 未设置 → 后台未启用，给出明确指引（区别于密码错误）
+  if (!process.env.DASHBOARD_SECRET) {
+    return new Response(
+      JSON.stringify({
+        error:
+          "后台未启用：请在 Vercel 项目 → Settings → Environment Variables 中设置 DASHBOARD_SECRET 后重新部署。",
+      }),
+      { status: 503, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
   if (!checkAuth(key)) return unauthResponse();
 
   // KV 未配置（未创建 Vercel KV 存储）时，给出明确指引而不是笼统报错
