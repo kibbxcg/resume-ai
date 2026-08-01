@@ -24,10 +24,12 @@ import { pipeline, env, type Tensor } from "@xenova/transformers";
 const MODEL_NAME = "Xenova/bge-small-zh-v1.5";
 
 // 模型下载源：
-// - 本地/国内部署默认走 hf-mirror.com（国内镜像，规避 huggingface.co 被墙）
-// - 部署到海外服务器（如 Vercel）时，建议设 HF_ENDPOINT=https://huggingface.co，
-//   官方源在海外下载更快
-env.remoteHost = process.env.HF_ENDPOINT || "https://hf-mirror.com";
+// - 默认走官方 huggingface.co（全球 CDN，Vercel 等海外部署零配置）
+// - 国内网络 huggingface.co 可能被墙：首次加载失败会自动回退到 hf-mirror.com
+// - 高级用户可用 HF_ENDPOINT 显式固定下载源
+const DEFAULT_HOST = "https://huggingface.co";
+const FALLBACK_HOST = "https://hf-mirror.com";
+env.remoteHost = process.env.HF_ENDPOINT || DEFAULT_HOST;
 
 // 是否允许本地模型（先检查本地缓存，没有再从远程下载）
 env.allowLocalModels = true;
@@ -43,9 +45,24 @@ interface Extractor {
 
 let extractorPromise: Promise<Extractor> | null = null;
 
+/** 加载模型；官方源失败时自动回退到国内镜像，保证两种网络环境都能用 */
+async function loadExtractor(): Promise<Extractor> {
+  try {
+    return await pipeline("feature-extraction", MODEL_NAME);
+  } catch (error) {
+    // 官方源失败（典型：国内网络被墙）→ 换 hf-mirror.com 重试一次
+    if (env.remoteHost !== FALLBACK_HOST) {
+      console.warn("[embedding] 模型下载失败，回退到 hf-mirror.com：", error);
+      env.remoteHost = FALLBACK_HOST;
+      return await pipeline("feature-extraction", MODEL_NAME);
+    }
+    throw error;
+  }
+}
+
 function getExtractor(): Promise<Extractor> {
   if (!extractorPromise) {
-    extractorPromise = pipeline("feature-extraction", MODEL_NAME);
+    extractorPromise = loadExtractor();
   }
   return extractorPromise;
 }
