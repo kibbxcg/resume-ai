@@ -11,6 +11,7 @@
 - [TypeScript 类型](#typescript-类型)
 - [嵌入模型](#嵌入模型)
 - [Vercel 部署与存储](#vercel-部署与存储)
+- [前端 / 暗色模式](#前端--暗色模式)
 - [运行时](#运行时)
 - [调试技巧](#调试技巧)
 
@@ -77,15 +78,19 @@ ConnectTimeoutError: Connect Timeout Error (attempted address: huggingface.co:44
 
 **原因**：`@xenova/transformers` 默认从 `huggingface.co` 下载模型文件，该域名在国内被墙。
 
-**解决**：在 `embedding.ts` 中设置国内镜像：
+**解决**：现在的实现是**双源自动回退**——默认官方源 `huggingface.co`（Vercel 等海外部署零配置），国内网络加载失败会自动切到 `hf-mirror.com`：
 
 ```typescript
-import { env } from "@xenova/transformers";
-env.remoteHost = "https://hf-mirror.com";
-env.allowRemoteModels = true;
+// embedding.ts
+const DEFAULT_HOST = "https://huggingface.co";
+const FALLBACK_HOST = "https://hf-mirror.com";
+env.remoteHost = process.env.HF_ENDPOINT || DEFAULT_HOST;
+// 加载失败时 env.remoteHost = FALLBACK_HOST 重试一次
 ```
 
-**参考文件**：[src/lib/embedding.ts](../src/lib/embedding.ts) 第 24-27 行
+高级用户可用 `HF_ENDPOINT` 环境变量固定下载源。
+
+**参考文件**：[src/lib/embedding.ts](../src/lib/embedding.ts)
 
 ---
 
@@ -170,8 +175,17 @@ error TS2322: Type 'true' is not assignable to type
 **原因**：`@xenova/transformers` v2 的 TypeScript 声明文件与实际运行时 API 不匹配——`pipeline()` 返回的联合类型过于宽泛，部分属性缺失。
 
 **解决**：
-1. 将 `pipeline()` 返回值用 `any` 接收
-2. 模型输出用 `(output as any).data` 和 `(output as any).dims` 访问
+1. 声明最小调用接口，用官方 `Tensor` 类型收窄返回（替代散落 `any`，保持 lint 全绿）：
+
+```typescript
+import type { Tensor } from "@xenova/transformers";
+
+interface Extractor {
+  (text: string): Promise<Tensor>;
+}
+```
+
+2. 模型输出用 `(output as Float32Array)` 访问 `.data`（`Tensor.data` 类型是宽泛的 `DataArray`）
 3. 手工实现均值池化（`pooling: "mean"` 选项运行时也不生效）
 
 **参考文件**：[src/lib/embedding.ts](../src/lib/embedding.ts)
@@ -269,9 +283,152 @@ for (let t = 0; t < seqLen; t++) {
 
 ---
 
+### 13. Vercel 部署后 /api/chat 报 500：onnxruntime 原生库缺失
+
+**现象**：
+
+```
+Failed to load external module @xenova/transformers:
+Error: libonnxruntime.so.1.14.0: cannot open shared object file: No such file or directory
+```
+
+**原因**：`@xenova/transformers` 在 Node 依赖 `onnxruntime-node`，其原生 `.so` 文件靠路径动态加载，打包器追踪不到 → 被 Vercel serverless 打包剔除。模块加载失败 → 整个 `/api/chat` 500。
+
+**解决**：`next.config.ts` 用 `outputFileTracingIncludes` 强制把原生文件打进部署包：
+
+```typescript
+const nextConfig: NextConfig = {
+  outputFileTracingIncludes: {
+    "/api/chat": ["./node_modules/onnxruntime-node/bin/**"],
+    "/api/dashboard": ["./node_modules/onnxruntime-node/bin/**"],
+  },
+};
+```
+
+**验证**：构建后检查 `route.js.nft.json` 追踪清单里包含 `linux/x64/libonnxruntime.so.1.14.0`。
+
+**参考文件**：[next.config.ts](../next.config.ts)
+
+---
+
+### 14. Vercel 函数超时（默认 10s）导致冷启动下模型失败
+
+**现象**：部署后提问前端显示"请求失败"（服务器返回非 JSON 错误页）。
+
+**原因**：首次冷启动要下载 80MB 模型 + 加载 onnxruntime，超过 Vercel 默认 10s 超时 → 函数被终止 → Vercel 返回 HTML 错误页 → 前端 `JSON.parse` 失败，兜底显示"请求失败"。
+
+**解决**：`vercel.json` 提升超时到 60s：
+
+```json
+{
+  "functions": {
+    "src/app/api/chat/route.ts": { "maxDuration": 60 },
+    "src/app/api/dashboard/route.ts": { "maxDuration": 60 }
+  }
+}
+```
+
+---
+
+### 15. hf-mirror 从 Vercel 美国服务器拉取慢 / 失败
+
+**原因**：`hf-mirror.com` 是国内镜像，Vercel 函数跑在美国，跨洋拉取很慢甚至卡死。
+
+**解决**：双源自动回退（见问题 3）——海外部署自动用官方源，无需配置；国内本地用国内镜像。
+
+---
+
+### 16. 环境变量改动后必须重新部署（KV / 密钥不生效）
+
+**现象**：在 Vercel 创建 KV 后仍报：
+
+```
+@vercel/kv: Missing required environment variables KV_REST_API_URL and KV_REST_API_TOKEN
+```
+
+**原因**：Vercel 的环境变量**在构建时注入**函数，已运行的旧部署不会自动获得新变量。连接 KV / 改密钥后不重新部署，函数还是旧配置。
+
+**解决**：任何 env 改动 → `Deployments → 最新一次 → Redeploy`。**重新部署是 90% 此类问题的解药。**
+
+---
+
+### 17. Dashboard 报"未授权访问"
+
+**原因**：两种情况——
+1. `DASHBOARD_SECRET` 未在 Vercel 设置（后台未启用）
+2. 设置了但 URL 的 `?key=` 填错
+
+**解决**：Settings → Environment Variables 设置 `DASHBOARD_SECRET` → 重新部署；URL 的 key 必须和 Vercel 上设置的值**一字不差**（大小写、连字符）。现在代码能区分这两种情况并给出不同提示。
+
+---
+
+### 18. Dashboard 报"加载失败，请重试"
+
+**原因**：Vercel KV 未创建，或创建了但没重新部署。
+
+**解决**：`Storage → Create → KV` → 重新部署。现在代码会提示"未检测到 KV 环境变量，请确认创建 KV 后重新部署"，不再笼统报错。
+
+**参考文件**：[src/app/api/dashboard/route.ts](../src/app/api/dashboard/route.ts)
+
+---
+
+## 前端 / 暗色模式
+
+### 19. 水合告警：A tree hydrated but some attributes... didn't match
+
+**现象**：打开页面后 Console 报：
+
+```
+A tree hydrated but some attributes of the server rendered HTML didn't match the client properties.
+```
+
+**原因**：暗色模式防闪烁脚本在 React 水合**之前**给 `<html>` 加了 `.dark` 类，React 比对 class 属性时发现服务端/客户端不一致。仅在系统为深色模式时出现。
+
+**解决**：`<html>` 元素加 `suppressHydrationWarning`：
+
+```tsx
+<html lang="zh-CN" className="h-full antialiased" suppressHydrationWarning>
+```
+
+**参考文件**：[src/app/layout.tsx](../src/app/layout.tsx)
+
+---
+
+### 20. 主题切换要"点两下"才生效
+
+**现象**：从深色切换到浅色需要点两次按钮。
+
+**原因**：三态循环按钮（🌓 跟随系统 → ☀️ 浅色 → 🌙 深色）里，"深色 → 跟随系统"在系统本身是深色时**没有视觉变化**，看起来像没点中。
+
+**解决**：改为**分段选择器**（☀️ / 🌓 / 🌙 三个独立按钮），点哪个直达哪个，无循环歧义。
+
+**参考文件**：[src/components/ThemeToggle.tsx](../src/components/ThemeToggle.tsx)
+
+---
+
+### 21. react-hooks/set-state-in-effect 报错
+
+**现象**：ESLint 报 `Calling setState synchronously within an effect can trigger cascading renders`。
+
+**原因**：React 19 新 lint 规则禁止在 effect 内同步 setState。
+
+**解决**：主题初始化、读 URL 参数这类"必须在水合后读浏览器状态"的场景是合法用途，加注释说明并关闭该规则：
+
+```tsx
+useEffect(() => {
+  const initial = getInitialMode();
+  // 必须在水合后读取 localStorage（SSR 阶段没有 window）
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  setMode(initial);
+  applyTheme(initial);
+}, []);
+```
+
+---
+
 ## 运行时
 
-### 13. tsx -e 不支持顶层 await（CJS 模式）
+### 22. tsx -e 不支持顶层 await（CJS 模式）
 
 **现象**：
 
@@ -285,7 +442,7 @@ ERROR: Top-level await is currently not supported with the "cjs" output format
 
 ---
 
-### 14. Node.js 不自动加载 .env.local
+### 23. Node.js 不自动加载 .env.local
 
 **现象**：`npx tsx script.ts` 运行时读取不到环境变量（如 `KV_REST_API_URL`）。
 
@@ -303,7 +460,7 @@ node --env-file=.env.local --import tsx/esm script.ts
 
 ## 调试技巧
 
-### 15. 验证嵌入模型是否正常工作的标准方法
+### 24. 验证嵌入模型是否正常工作的标准方法
 
 使用完整句子而非短词进行测试，相似度阈值参考值：
 
@@ -320,7 +477,7 @@ const v2 = await embed("介绍一下你的项目经历");  // 语义相同 → >
 const v3 = await embed("今天天气怎么样");        // 不相关 → < 0.4
 ```
 
-### 16. RAG 检索阈值调优
+### 25. RAG 检索阈值调优
 
 当前项目使用的阈值：
 
@@ -339,5 +496,5 @@ const v3 = await embed("今天天气怎么样");        // 不相关 → < 0.4
 |------|------|---------|
 | Vercel 域名被墙 | 手机无法访问 | Phase 4：绑定自定义域名 |
 | sharp 空壳每次 install 都要重做 | 本地开发不便 | 加 `postinstall` 脚本自动化 |
-| 嵌入模型 80MB 首次下载慢 | 冷启动慢 10-30 秒 | 暂无好方案，hf-mirror 已优化 |
-| RAG 检索缓存重启丢失 | YAML Q&A 每次重启要重新算向量 | Phase 2.5 已接 KV，重启从 KV 加载 |
+| Vercel 上嵌入模型冷启动仍偏慢 | 首次对话 10-60 秒 | ✅ 已缓解（60s 超时 + 双源回退 + 原生库打包）；预热后正常 |
+| RAG 检索缓存重启丢失 | YAML Q&A 每次重启要重新算向量 | ✅ 已解决（Phase 2 接 KV，重启从 KV 加载）|

@@ -115,6 +115,8 @@ LLM_BASE_URL=               # 可选，自定义代理地址
 
 </details>
 
+> 📖 完整部署流程（前台 + 后台开通）见 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+
 ---
 
 ## 🎛️ 求职者后台（查看问答对）
@@ -246,6 +248,7 @@ resume-ai/
 ├── docs/
 │   ├── REQUIREMENTS.md      ← 详细需求文档
 │   ├── IMPLEMENTATION_PLAN.md ← 实现方案
+│   ├── DEPLOYMENT.md        ← 部署指南（小白版）
 │   ├── TROUBLESHOOTING.md   ← 排障指南
 │   └── images/              ← README 配图
 └── .github/workflows/
