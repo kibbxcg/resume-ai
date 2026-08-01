@@ -15,6 +15,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import rehypeHighlight from "rehype-highlight";
 
 // ============================================================
 // 类型定义
@@ -275,7 +276,7 @@ export default function ChatWindow({ candidateName, candidateTitle }: Props) {
               {/* 用户消息 → 纯文本；AI 消息 → Markdown 渲染 */}
               {msg.role === "assistant" ? (
                 msg.content ? (
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  <ReactMarkdown rehypePlugins={[rehypeHighlight]}>{msg.content}</ReactMarkdown>
                 ) : (
                   // AI 正在生成，显示闪烁光标
                   <span className="inline-flex items-center gap-1.5 text-gray-400">

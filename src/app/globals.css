@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /* 暗色模式改为 class 驱动（配合 ThemeToggle 手动切换）。
    原来用 @media (prefers-color-scheme)，现在由根元素上的 .dark 类决定，
@@ -70,4 +71,130 @@ body {
   50% {
     box-shadow: 0 8px 32px rgba(139, 92, 246, 0.6);
   }
+}
+
+/* ============================================================
+   Markdown 渲染（typography + 代码高亮）
+   ============================================================ */
+
+/* 代码块 */
+.prose pre {
+  background: #f6f8fa;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  padding: 0.9em 1em;
+  overflow-x: auto;
+}
+.dark .prose pre {
+  background: #16161f;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* 行内代码 */
+.prose :not(pre) > code {
+  background: rgba(139, 92, 246, 0.08);
+  color: #7c3aed;
+  border-radius: 5px;
+  padding: 0.15em 0.4em;
+  font-size: 0.85em;
+  font-weight: 500;
+}
+.dark .prose :not(pre) > code {
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
+}
+
+/* 代码块内部的 code 不套用行内样式 */
+.prose pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  font-size: inherit;
+  font-weight: 400;
+}
+
+/* highlight.js token 配色（浅色） */
+.prose .hljs {
+  color: #1f2328;
+}
+.prose .hljs-comment,
+.prose .hljs-quote {
+  color: #6e7781;
+  font-style: italic;
+}
+.prose .hljs-keyword,
+.prose .hljs-selector-tag,
+.prose .hljs-literal {
+  color: #cf222e;
+}
+.prose .hljs-string,
+.prose .hljs-attr,
+.prose .hljs-regexp {
+  color: #0a3069;
+}
+.prose .hljs-number,
+.prose .hljs-meta {
+  color: #0550ae;
+}
+.prose .hljs-title,
+.prose .hljs-function,
+.prose .hljs-section {
+  color: #8250df;
+}
+.prose .hljs-built_in,
+.prose .hljs-type {
+  color: #0550ae;
+}
+.prose .hljs-name,
+.prose .hljs-tag {
+  color: #116329;
+}
+.prose .hljs-params,
+.prose .hljs-variable {
+  color: #953800;
+}
+.prose .hljs-addition {
+  color: #116329;
+}
+.prose .hljs-deletion {
+  color: #cf222e;
+}
+
+/* highlight.js token 配色（深色） */
+.dark .prose .hljs {
+  color: #e6e6ef;
+}
+.dark .prose .hljs-comment,
+.dark .prose .hljs-quote {
+  color: #8b949e;
+  font-style: italic;
+}
+.dark .prose .hljs-keyword,
+.dark .prose .hljs-selector-tag,
+.dark .prose .hljs-literal {
+  color: #ff7b72;
+}
+.dark .prose .hljs-string,
+.dark .prose .hljs-attr {
+  color: #a5d6ff;
+}
+.dark .prose .hljs-number,
+.dark .prose .hljs-meta {
+  color: #79c0ff;
+}
+.dark .prose .hljs-title,
+.dark .prose .hljs-function,
+.dark .prose .hljs-section {
+  color: #d2a8ff;
+}
+.dark .prose .hljs-built_in,
+.dark .prose .hljs-type {
+  color: #79c0ff;
+}
+.dark .prose .hljs-name,
+.dark .prose .hljs-tag {
+  color: #7ee787;
+}
+.dark .prose .hljs-params {
+  color: #ffa657;
 }
