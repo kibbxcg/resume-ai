@@ -10,16 +10,29 @@
 // ============================================================
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { buildSystemPrompt, type RAGHit } from "@/lib/prompt";
 import { streamChat } from "@/lib/llm/provider";
 import { loadCuratedQA, searchCuratedQA, type QAItem } from "@/lib/knowledge";
 import { savePendingQA, recordAnalytics, loadCuratedQAFromKV } from "@/lib/kv";
 
+// history 逐条校验：role 白名单 + 内容限长，防恶意客户端注入 role:"system"
+// 的消息劫持对话。上限只防滥用——user 消息本就限 2000 字，assistant 英文
+// 回复（max_tokens=2000）可能到 ~8000 字符，放宽到 10000 防止误伤多轮记忆。
+const HistoryMessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().max(10000),
+});
+
 // ── 启动时合并加载：curated_qa.yaml（预置） + Vercel KV（审核收录的）──
+// 缓存带 TTL：chat 和 dashboard 是两个独立 serverless 函数，dashboard 收录
+// 新问答后无法跨函数通知本缓存失效，所以靠短 TTL 保证改动最迟 30 秒生效。
 let curatedQACache: QAItem[] | null = null;
+let curatedQACachedAt = 0;
+const CURATED_CACHE_TTL_MS = 30_000;
 
 async function getCuratedQA(): Promise<QAItem[]> {
-  if (!curatedQACache) {
+  if (!curatedQACache || Date.now() - curatedQACachedAt > CURATED_CACHE_TTL_MS) {
     // 同时从 YAML 和 KV 加载。
     // 任一失败只警告、不阻断——RAG 是增强能力，挂掉也要保证对话可用（回退 profile 全量注入）。
     const [yamlItems, kvItems] = await Promise.all([
@@ -39,14 +52,10 @@ async function getCuratedQA(): Promise<QAItem[]> {
     for (const item of kvItems) merged.set(item.id, item);
 
     curatedQACache = Array.from(merged.values());
+    curatedQACachedAt = Date.now();
     console.log(`[RAG] 已加载 ${curatedQACache.length} 条已审核问答（YAML: ${yamlItems.length}, KV: ${kvItems.length}）`);
   }
   return curatedQACache;
-}
-
-// ── 刷新缓存（Dashboard 收录/编辑后缓存需要更新）──
-export function invalidateCuratedCache() {
-  curatedQACache = null;
 }
 
 // ============================================================
@@ -57,9 +66,16 @@ export async function POST(request: NextRequest) {
   try {
     // ── 1.1 解析请求 ──
     const body = await request.json().catch(() => null);
-    const userMessage: string = body?.message?.trim();
-    const history: { role: "user" | "assistant"; content: string }[] =
-      Array.isArray(body?.history) ? body.history.slice(-6) : [];
+    // message 必须是字符串——非字符串（数字/对象等）礼貌 400，而不是抛 TypeError 变 500
+    const userMessage: string =
+      typeof body?.message === "string" ? body.message.trim() : "";
+    // history 由浏览器传入，属于不可信输入：逐条 zod 校验，不合格的条目直接丢弃
+    const rawHistory: unknown[] = Array.isArray(body?.history) ? body.history : [];
+    const history: { role: "user" | "assistant"; content: string }[] = rawHistory
+      .map((m) => HistoryMessageSchema.safeParse(m))
+      .filter((r) => r.success)
+      .map((r) => r.data)
+      .slice(-6);
 
     if (!userMessage) {
       return new Response(

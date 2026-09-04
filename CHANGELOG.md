@@ -6,6 +6,24 @@
 
 ## [Unreleased] — 当前开发中
 
+### 2026-09-05 — 代码巡检：修复 RAG 缓存失效缺陷 + 补强输入安全
+
+**变更类型**：修复 + 安全加固
+
+**说明**：全量代码巡检发现并修复 5 个问题。最重要的是 **RAG 缓存永不失效**：chat 与 dashboard 是两个独立 serverless 函数，原 `invalidateCuratedCache()` 既无人调用、跨函数调用也无效，导致后台收录的新问答在 chat 函数冷启动前永远不生效——改为 30 秒 TTL 自动刷新。安全方面：`history` 此前未校验，恶意客户端可注入 `role:"system"` 消息劫持对话，现逐条 zod 校验（role 白名单 + 长度上限）；后台鉴权改常数时间比较防时序攻击；问答文本限长保护 KV。已通过本地 dev server 真实冒烟验证（注入 history 被正确丢弃，KV 不可达时降级路径正常）。
+
+**变更文件**：
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `src/app/api/chat/route.ts` | 修复 | curated QA 缓存改 30s TTL（原跨函数失效机制无效）；history 逐条 zod 校验；非字符串 message 返回 400 而非 500 |
+| `src/app/api/dashboard/route.ts` | 安全 | `DASHBOARD_SECRET` 改 SHA-256 + timingSafeEqual 常数时间比较；approve/edit 文本限长（问题 2000 / 答案 5000）；id/pendingId 类型校验 |
+| `src/lib/kv.ts` | 修复 | pending/curated ID 从 `Date.now()` 改 `randomUUID()`，消除并发同毫秒撞 ID |
+
+**影响范围**：后端 / 安全
+
+---
+
 ### 2026-09-05 — sharp 空壳修复自动化（postinstall + dev/build 前置）
 
 **变更类型**：新增

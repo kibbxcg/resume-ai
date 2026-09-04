@@ -8,6 +8,7 @@
 //   → 收录/编辑/删除 Q&A（body 里带 action + key）
 // ============================================================
 
+import { createHash, timingSafeEqual } from "crypto";
 import { NextRequest } from "next/server";
 import {
   getPendingQAs,
@@ -19,6 +20,10 @@ import {
   getHotQuestions,
 } from "@/lib/kv";
 
+// 问答文本长度上限：保护 KV 存储，也避免异常大的数据进入 RAG 上下文
+const MAX_QUESTION_LENGTH = 2000;
+const MAX_ANSWER_LENGTH = 5000;
+
 // ============================================================
 // 鉴权检查
 // ============================================================
@@ -26,8 +31,12 @@ import {
 function checkAuth(key: string | null): boolean {
   const secret = process.env.DASHBOARD_SECRET;
   // 如果没有设置 DASHBOARD_SECRET，拒绝所有请求
-  if (!secret) return false;
-  return key === secret;
+  if (!secret || !key) return false;
+  // 双方都先哈希再比较：timingSafeEqual 要求等长输入，
+  // 哈希后长度固定，同时让比较耗时与内容无关（防时序攻击逐字符猜密码）
+  const keyHash = createHash("sha256").update(key).digest();
+  const secretHash = createHash("sha256").update(secret).digest();
+  return timingSafeEqual(keyHash, secretHash);
 }
 
 function unauthResponse(): Response {
@@ -110,21 +119,34 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
-  if (!body || !checkAuth(body.key)) return unauthResponse();
+  if (!body || !checkAuth(typeof body.key === "string" ? body.key : null)) {
+    return unauthResponse();
+  }
 
   const { action, id, question, answer, pendingId } = body;
+
+  // 问答文本统一钳制：必须是字符串、去首尾空白、限长——保护 KV 与 RAG 上下文
+  const clampText = (v: unknown, max: number): string | null => {
+    if (typeof v !== "string") return null;
+    const t = v.trim();
+    return t && t.length <= max ? t : null;
+  };
 
   try {
     switch (action) {
       // ── 收录：待审核 → 已收录 ──
       case "approve": {
-        if (!question || !answer || !pendingId) {
+        const q = clampText(question, MAX_QUESTION_LENGTH);
+        const a = clampText(answer, MAX_ANSWER_LENGTH);
+        if (!q || !a || typeof pendingId !== "string" || !pendingId) {
           return new Response(
-            JSON.stringify({ error: "缺少 question、answer 或 pendingId" }),
+            JSON.stringify({
+              error: `缺少或非法 question（≤${MAX_QUESTION_LENGTH} 字）、answer（≤${MAX_ANSWER_LENGTH} 字）、pendingId`,
+            }),
             { status: 400, headers: { "Content-Type": "application/json" } }
           );
         }
-        const approved = await approveQA(question, answer, pendingId);
+        const approved = await approveQA(q, a, pendingId);
         return new Response(
           JSON.stringify({ success: true, item: approved }),
           { headers: { "Content-Type": "application/json" } }
@@ -133,13 +155,17 @@ export async function POST(request: NextRequest) {
 
       // ── 编辑已收录 Q&A ──
       case "edit": {
-        if (!id || !question || !answer) {
+        const q = clampText(question, MAX_QUESTION_LENGTH);
+        const a = clampText(answer, MAX_ANSWER_LENGTH);
+        if (!q || !a || typeof id !== "string" || !id) {
           return new Response(
-            JSON.stringify({ error: "缺少 id、question 或 answer" }),
+            JSON.stringify({
+              error: `缺少或非法 id、question（≤${MAX_QUESTION_LENGTH} 字）、answer（≤${MAX_ANSWER_LENGTH} 字）`,
+            }),
             { status: 400, headers: { "Content-Type": "application/json" } }
           );
         }
-        const edited = await editCuratedQA(id, question, answer);
+        const edited = await editCuratedQA(id, q, a);
         return new Response(
           JSON.stringify({ success: true, item: edited }),
           { headers: { "Content-Type": "application/json" } }
@@ -148,7 +174,7 @@ export async function POST(request: NextRequest) {
 
       // ── 删除已收录 Q&A ──
       case "delete_curated": {
-        if (!id) {
+        if (typeof id !== "string" || !id) {
           return new Response(
             JSON.stringify({ error: "缺少 id" }),
             { status: 400, headers: { "Content-Type": "application/json" } }
@@ -163,7 +189,7 @@ export async function POST(request: NextRequest) {
 
       // ── 删除待审核 Q&A ──
       case "delete_pending": {
-        if (!id) {
+        if (typeof id !== "string" || !id) {
           return new Response(
             JSON.stringify({ error: "缺少 id" }),
             { status: 400, headers: { "Content-Type": "application/json" } }

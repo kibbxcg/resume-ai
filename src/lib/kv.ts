@@ -6,6 +6,7 @@
 //       kv.get(key) 返回的已经是解析好的对象，不需要 JSON.parse
 // ============================================================
 
+import { randomUUID } from "crypto";
 import { kv } from "@vercel/kv";
 import { embed } from "./embedding";
 
@@ -51,7 +52,8 @@ export async function savePendingQA(
   question: string,
   answer: string
 ): Promise<void> {
-  const id = `pending_${Date.now()}`;
+  // randomUUID：Date.now() 在并发下同毫秒会撞 ID，后写覆盖先写
+  const id = `pending_${randomUUID()}`;
   const item: PendingQA = {
     id,
     question,
@@ -81,7 +83,7 @@ export async function approveQA(
   answer: string,
   pendingId: string
 ): Promise<CuratedQA> {
-  const id = `curated_${Date.now()}`;
+  const id = `curated_${randomUUID()}`;
   const embedding = await embed(question);
 
   const item: CuratedQA = {
