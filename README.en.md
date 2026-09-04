@@ -254,6 +254,7 @@ resume-ai/
 ├── docs/
 │   ├── REQUIREMENTS.md      ← Requirements doc (Chinese)
 │   ├── IMPLEMENTATION_PLAN.md ← Implementation plan
+│   ├── API.md               ← API reference (Chinese)
 │   ├── DEPLOYMENT.md        ← Deployment guide (Chinese)
 │   ├── TROUBLESHOOTING.md   ← Troubleshooting handbook (Chinese)
 │   └── images/              ← README images

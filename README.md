@@ -253,6 +253,7 @@ resume-ai/
 ├── docs/
 │   ├── REQUIREMENTS.md      ← 详细需求文档
 │   ├── IMPLEMENTATION_PLAN.md ← 实现方案
+│   ├── API.md               ← API 接口文档
 │   ├── DEPLOYMENT.md        ← 部署指南（小白版）
 │   ├── TROUBLESHOOTING.md   ← 排障指南
 │   └── images/              ← README 配图
