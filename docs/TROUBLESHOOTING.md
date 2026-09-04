@@ -488,6 +488,50 @@ const v3 = await embed("今天天气怎么样");        // 不相关 → < 0.4
 
 阈值可在 `searchCuratedQA()` 调用时覆盖。
 
+> 2026-09-05 更新：短问题降阈值已落地为默认行为（`curatedThresholdFor()`），常规问题仍为 0.75。
+
+---
+
+### 26. 跨 serverless 函数"通知失效"根本无效（chat 缓存不更新）
+
+**现象**：Dashboard 收录了新的 Q&A，但 chat 接口迟迟用不上（低流量站点可能几天），只有冷启动才恢复。
+
+**原因**：`/api/chat` 和 `/api/dashboard` 是**两个独立的 serverless 函数**——各自独立进程、独立内存。曾在 chat 路由导出 `invalidateCuratedCache()`，dashboard 收录后调用它来"清缓存"，但即使真的调用，清的也只是 dashboard 自己进程里根本不存在的缓存；chat 进程的缓存纹丝不动。另外该函数实际从未被任何地方调用，属于双重失效的死代码。
+
+**解决**：跨进程无法主动失效，就用**短 TTL**——chat 的 curated QA 缓存 30 秒过期，过期后重新从 YAML + KV 合并加载。dashboard 的改动最迟 30 秒生效，KV 读取开销可忽略（每 warm 实例每 30 秒一次）。
+
+**教训**：在 serverless 上，任何"本进程内存"都是单实例私有的。想跨函数同步状态，要么走共享存储（每次读），要么接受 TTL 延迟。
+
+**参考文件**：[src/app/api/chat/route.ts](../src/app/api/chat/route.ts)
+
+---
+
+### 27. vitest 5 安装失败：ERESOLVE 与 @types/node 版本冲突
+
+**现象**：
+
+```
+npm error ERESOLVE could not resolve
+npm error peerOptional @types/node@"^22.0.0 || >=24.0.0" from vitest@5.0.0
+npm error Found: @types/node@20.19.43
+```
+
+**原因**：vitest 5 的 peer 依赖要求 `@types/node ≥ 22`，项目为匹配 CI 的 Node 20 锁在 `@types/node@^20`。升级 `@types/node` 到 22 有引入类型定义与 Node 20 运行时不一致的风险，不值得。
+
+**解决**：改装 vitest 2.x（`npm install -D vitest@^2.1.9`），与 Node 20 完全兼容，纯函数单测用不到新版本的特性。
+
+---
+
+### 28. 嵌入模型加载失败被永久缓存，瞬时网络抖动导致 RAG 长期瘫痪
+
+**现象**：部署后某次首次对话时网络抖动，之后 RAG 一直不生效（日志反复出现嵌入模型报错），直到函数冷启动才恢复。
+
+**原因**：`getExtractor()` 用 `extractorPromise` 缓存模型加载 Promise——失败时 rejected Promise 也被缓存，后续请求全部快速失败，没有任何重试机会。
+
+**解决**：`.catch` 里清空 `extractorPromise` 再抛出，下次请求自动重试下载。模块级的 `transformersBroken` 标记仍然只拦截真正不可恢复的包加载失败（如原生库缺失）。
+
+**参考文件**：[src/lib/embedding.ts](../src/lib/embedding.ts)
+
 ---
 
 ## 待解决问题
