@@ -6,6 +6,26 @@
 
 ## [Unreleased] — 当前开发中
 
+### 2026-09-05 — 安全响应头 + 热门问题归一化统计 + 文档同步
+
+**变更类型**：新增 + 修改
+
+**说明**：三组小改进。① 全站安全响应头：`X-Frame-Options: DENY` 防点击劫持（尤其是带 `?key=` 的 /dashboard）、`Referrer-Policy: strict-origin-when-cross-origin` 跨域只发源、`X-Content-Type-Options: nosniff`，已在 dev server 上验证生效。② 热门问题统计归一化：末尾标点（`你熟悉哪些技术栈？` vs `你熟悉哪些技术栈`）与多余空白不再拆成两条记录，聚合更准。③ 文档对齐现实：REQUIREMENTS 5.2 检索参数表移除旧的"两级检索 / profile 分块"残留描述、补短问题自适应阈值；IMPLEMENTATION_PLAN 进度行更新本次维护加固内容。
+
+**变更文件**：
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `next.config.ts` | 修改 | 全站 headers()：X-Frame-Options / nosniff / Referrer-Policy |
+| `src/lib/kv.ts` | 修改 | 新增 `normalizeQuestion()`，统计前归一化 |
+| `src/lib/kv.test.ts` | 新增 | 归一化 4 个用例 |
+| `docs/REQUIREMENTS.md` | 修改 | 5.2 检索规格对齐单级检索 + 自适应阈值现状 |
+| `docs/IMPLEMENTATION_PLAN.md` | 修改 | 进度行补维护加固记录 |
+
+**影响范围**：配置 / 后端 / 文档
+
+---
+
 ### 2026-09-05 — /api/chat 按 IP 限流（保护 LLM 额度）+ 清理模板遗留
 
 **变更类型**：新增 + 清理

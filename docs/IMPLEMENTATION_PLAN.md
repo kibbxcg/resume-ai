@@ -197,4 +197,4 @@ Guardrails → Persona → 全量 profile 文字 → [检索到的 Q&A 答案]
 
 当前进度：Phase 1 ✅ · Phase 2 ✅ · Phase 3 ✅（2026-08-01）。
 
-下一步：**Phase 4 开源推广**（README 完善 + Demo GIF + Vercel Deploy Button + 发版）。
+维护加固 ✅（2026-09-05）：全量代码巡检与安全加固（RAG 缓存 TTL 修复、history 注入防御、后台鉴权常数时间比较、/api/chat 限流）、vitest 单测体系接入 CI、sharp 空壳修复自动化、英文 README、OG 社交卡片、短问题自适应检索阈值。Phase 4 中 Demo GIF 与发版（CHANGELOG 打 tag v1.0.0）仍待办。

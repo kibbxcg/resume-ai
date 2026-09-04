@@ -251,26 +251,24 @@ LLM_BASE_URL=(可选)
 **嵌入模型**：
 - 模型：`Xenova/bge-small-zh-v1.5`（通过 `@xenova/transformers` 加载）
 - 维度：384 维
-- 大小：23MB（首次加载缓存到 `node_modules/.cache`）
+- 大小：~80MB（首次加载缓存到本地）
 - 运行位置：API Route（Node.js Runtime，非 Edge）
 
-**分块策略**：
+**检索策略**（当前为单级检索 + profile 全量兜底，profile 不分块不参与检索）：
+
 ```
-profile.yaml → 按段拆分：
-  - basic + summary      → 1 块（概览块）
-  - experience[0..n]     → 每段经历 1 块
-  - projects[0..n]       → 每个项目 1 块
-  - education             → 1 块
-  - skills                → 1 块
+只有 curated_qa（YAML 预置 + KV 审核收录）参与向量化检索；
+profile.yaml 始终全量注入 System Prompt，作为兜底上下文。
 ```
 
 **检索参数**：
 | 参数 | 值 | 说明 |
 |:---|:---|:---|
-| curated_qa 相似度阈值 | ≥ 0.75 | 低于此值回退到 profile 检索 |
-| profile chunk 相似度阈值 | ≥ 0.6 | 低于此值礼貌拒答 |
+| curated_qa 相似度阈值（常规问题） | ≥ 0.75 | 保守，宁漏勿错 |
+| curated_qa 相似度阈值（短问题 < 5 字） | ≥ 0.6 | 短文本语义信号弱，降阈值换召回 |
 | curated_qa Top-K | 3 | 最多取 3 条最相似的已审核 Q&A |
-| profile chunk Top-K | 3 | 最多取 3 个最相似文档块 |
+
+> 简历外问题的拒答由 System Prompt Guardrails 负责（profile 始终注入，不存在"检索不到就拒答"的路径）。
 
 ### 5.3 求职者审核后台 (/dashboard)
 

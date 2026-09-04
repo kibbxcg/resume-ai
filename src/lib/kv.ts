@@ -142,7 +142,7 @@ export async function getCuratedQAsFromKV(): Promise<CuratedQA[]> {
 // ============================================================
 
 export async function recordAnalytics(question: string): Promise<void> {
-  const normalized = question.trim().slice(0, 100);
+  const normalized = normalizeQuestion(question);
   const questions: HotQuestion[] = (await kv.get<HotQuestion[]>(ANALYTICS_KEY)) || [];
 
   const existing = questions.find((q) => q.question === normalized);
@@ -159,6 +159,20 @@ export async function recordAnalytics(question: string): Promise<void> {
 
   const sorted = questions.sort((a, b) => b.count - a.count).slice(0, 50);
   await kv.set(ANALYTICS_KEY, sorted);
+}
+
+/**
+ * 问题归一化，让统计聚合同一问题的不同写法：
+ * 去首尾空白和末尾标点（？?。.！!～~）、压缩内部空白、限长 100。
+ * "你熟悉哪些技术栈？" 和 "你熟悉哪些技术栈" 应算同一个问题。
+ */
+export function normalizeQuestion(question: string): string {
+  return question
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[？?。.！!，,～~]+$/g, "")
+    .trim()
+    .slice(0, 100);
 }
 
 export async function getHotQuestions(topN = 10): Promise<HotQuestion[]> {

@@ -7,6 +7,21 @@ const nextConfig: NextConfig = {
     "/api/chat": ["./node_modules/onnxruntime-node/bin/**"],
     "/api/dashboard": ["./node_modules/onnxruntime-node/bin/**"],
   },
+  // 全站安全响应头：
+  // - X-Frame-Options: DENY 防点击劫持（尤其是带 ?key= 的 /dashboard）
+  // - Referrer-Policy 跨域只发源，防止 URL 里的 dashboard 密钥通过 Referer 外泄
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
