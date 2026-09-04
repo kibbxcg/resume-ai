@@ -28,7 +28,7 @@ npm run dev
 # 打开 http://localhost:3000
 ```
 
-> ⚠️ **注意**：首次使用嵌入模型会从 `hf-mirror.com` 下载约 80MB 权重文件（国内镜像，无需翻墙）。
+> ⚠️ **注意**：首次使用嵌入模型会下载约 80MB 权重文件（默认官方源 huggingface.co，国内网络失败自动切 hf-mirror.com 镜像，无需翻墙）。
 >
 > 🇨🇳 **国内网络装依赖**：如果 `npm install` 因 sharp 下载超时失败，改用 `npm install --ignore-scripts`。脚本会自动把 sharp 替换为空壳（本项目只做文本嵌入，用不到图片处理），首次 `npm run dev` 时自动生效，无需手动处理。
 

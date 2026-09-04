@@ -87,7 +87,13 @@ async function loadExtractor(): Promise<Extractor> {
 
 function getExtractor(): Promise<Extractor> {
   if (!extractorPromise) {
-    extractorPromise = loadExtractor();
+    extractorPromise = loadExtractor().catch((e) => {
+      // 模型加载失败（如首次下载时网络抖动）→ 清空缓存，下次请求重试，
+      // 而不是把这次失败永久缓存到进程冷启动。模块级损坏仍由
+      // transformersBroken 标记拦截（那个才是不可恢复的）。
+      extractorPromise = null;
+      throw e;
+    });
   }
   return extractorPromise;
 }

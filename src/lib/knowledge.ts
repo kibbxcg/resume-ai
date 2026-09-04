@@ -93,19 +93,32 @@ export async function loadCuratedQA(): Promise<QAItem[]> {
 // 检索
 // ============================================================
 
+// 相似度阈值：常规问题保守（宁漏勿错）；短问题（< 5 字）语义信号弱，
+// 按 docs/TROUBLESHOOTING.md 问题 25 的建议降低阈值换取召回。
+export const CURATED_THRESHOLD = 0.75;
+export const SHORT_QUERY_THRESHOLD = 0.6;
+export const SHORT_QUERY_LENGTH = 5;
+
+/** 根据问题长度返回该用的相似度阈值（纯函数，便于单测） */
+export function curatedThresholdFor(query: string): number {
+  return query.trim().length < SHORT_QUERY_LENGTH
+    ? SHORT_QUERY_THRESHOLD
+    : CURATED_THRESHOLD;
+}
+
 /**
  * 在已审核 Q&A 中搜索与查询最匹配的条目
  *
  * @param query     - 面试官当前的问题
  * @param qaList    - 已审核问答列表（来自 loadCuratedQA 或 KV）
  * @param topK      - 返回前 K 条
- * @param threshold - 相似度阈值（默认 0.75）
+ * @param threshold - 相似度阈值（默认按问题长度自适应：短问题降低以换取召回）
  */
 export async function searchCuratedQA(
   query: string,
   qaList: QAItem[],
   topK = 3,
-  threshold = 0.75
+  threshold = curatedThresholdFor(query)
 ): Promise<Array<{ item: QAItem; score: number }>> {
   return search(query, qaList, (qa) => qa.embedding, topK, threshold);
 }
