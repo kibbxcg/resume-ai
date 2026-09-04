@@ -15,6 +15,11 @@ import { streamChat } from "@/lib/llm/provider";
 import { loadCuratedQA, searchCuratedQA, type QAItem } from "@/lib/knowledge";
 import { savePendingQA, recordAnalytics, loadCuratedQAFromKV } from "@/lib/kv";
 import { sanitizeHistory } from "@/lib/validation";
+import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
+
+// 每个 IP 每分钟最多 20 次提问：足够真实面试官使用，能挡住脚本刷爆 LLM 额度
+const CHAT_RATE_LIMIT = 20;
+const CHAT_RATE_WINDOW_MS = 60_000;
 
 // ── 启动时合并加载：curated_qa.yaml（预置） + Vercel KV（审核收录的）──
 // 缓存带 TTL：chat 和 dashboard 是两个独立 serverless 函数，dashboard 收录
@@ -56,6 +61,27 @@ async function getCuratedQA(): Promise<QAItem[]> {
 
 export async function POST(request: NextRequest) {
   try {
+    // ── 1.0 限流：公开入口按 IP 限速，防止脚本刷爆站长的 LLM 额度 ──
+    const rate = checkRateLimit(
+      `chat:${getClientIP(request.headers)}`,
+      CHAT_RATE_LIMIT,
+      CHAT_RATE_WINDOW_MS
+    );
+    if (!rate.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: `提问太频繁啦，请 ${rate.retryAfterSec} 秒后再试。`,
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "Retry-After": String(rate.retryAfterSec),
+          },
+        }
+      );
+    }
+
     // ── 1.1 解析请求 ──
     const body = await request.json().catch(() => null);
     // message 必须是字符串——非字符串（数字/对象等）礼貌 400，而不是抛 TypeError 变 500

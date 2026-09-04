@@ -20,6 +20,9 @@
   <a href="https://github.com/kibbxcg/resume-ai/blob/main/LICENSE">
     <img src="https://img.shields.io/github/license/kibbxcg/resume-ai?style=for-the-badge" alt="License">
   </a>
+  <a href="https://github.com/kibbxcg/resume-ai/actions/workflows/ci.yml">
+    <img src="https://github.com/kibbxcg/resume-ai/actions/workflows/ci.yml/badge.svg" alt="CI">
+  </a>
   <a href="https://github.com/kibbxcg/resume-ai/issues">
     <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge" alt="PRs Welcome">
   </a>
