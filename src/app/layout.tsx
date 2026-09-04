@@ -5,6 +5,19 @@ import ThemeToggle from "@/components/ThemeToggle";
 export const metadata: Metadata = {
   title: process.env.NEXT_PUBLIC_SITE_NAME || "ResumeAI",
   description: "AI Resume Assistant — your digital interview avatar",
+  // 社交分享卡片：public/og-image.png 由 docs/images/og-card.html 渲染导出
+  openGraph: {
+    title: process.env.NEXT_PUBLIC_SITE_NAME || "ResumeAI",
+    description: "你的 AI 简历分身 · 5 分钟部署，让面试官打开链接直接对话",
+    type: "website",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "ResumeAI" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: process.env.NEXT_PUBLIC_SITE_NAME || "ResumeAI",
+    description: "你的 AI 简历分身 · 5 分钟部署，让面试官打开链接直接对话",
+    images: ["/og-image.png"],
+  },
 };
 
 // 首次绘制前设置暗色类，避免主题闪烁（FOUC）。

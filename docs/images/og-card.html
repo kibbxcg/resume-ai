@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #0a0a0f;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* 紫色氛围光（与站点 Hermes 主题一致） */
+  .glow-a {
+    position: absolute; top: -280px; left: 50%; transform: translateX(-50%);
+    width: 900px; height: 900px; border-radius: 50%;
+    background: rgba(139, 92, 246, 0.22); filter: blur(160px);
+  }
+  .glow-b {
+    position: absolute; bottom: -200px; right: -160px;
+    width: 700px; height: 700px; border-radius: 50%;
+    background: rgba(99, 102, 241, 0.16); filter: blur(150px);
+  }
+  .card {
+    position: relative; text-align: center; padding: 0 80px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 10px 28px; border-radius: 999px;
+    border: 1px solid rgba(167, 139, 250, 0.35);
+    background: rgba(139, 92, 246, 0.10);
+    color: #c4b5fd; font-size: 26px; letter-spacing: 8px;
+    margin-bottom: 44px;
+  }
+  h1 {
+    font-size: 118px; font-weight: 800; letter-spacing: -2px; line-height: 1.05;
+    background: linear-gradient(100deg, #a78bfa 0%, #818cf8 55%, #6366f1 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 34px;
+  }
+  .tagline {
+    font-size: 40px; color: #e4e4e7; font-weight: 500; letter-spacing: 2px;
+    margin-bottom: 26px;
+  }
+  .sub {
+    font-size: 27px; color: #8b8b96; letter-spacing: 1px;
+  }
+  .tech {
+    position: absolute; bottom: 52px; left: 0; right: 0;
+    text-align: center; font-size: 22px; color: #5b5b68; letter-spacing: 3px;
+  }
+  .tech b { color: #8b7fc7; font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="glow-a"></div>
+  <div class="glow-b"></div>
+  <div class="card">
+    <div class="badge">OPEN SOURCE</div>
+    <h1>ResumeAI</h1>
+    <div class="tagline">你的 AI 简历分身 · 5 分钟部署</div>
+    <div class="sub">让面试官打开链接，直接和"你"对话</div>
+  </div>
+  <div class="tech"><b>Next.js</b> · RAG 自进化知识库 · SSE 流式 · 多厂商 LLM</div>
+</body>
+</html>

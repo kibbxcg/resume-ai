@@ -6,6 +6,24 @@
 
 ## [Unreleased] — 当前开发中
 
+### 2026-09-05 — 补上缺失的 OG 社交分享卡片
+
+**变更类型**：新增
+
+**说明**：PRD v1.0 的 P0 项「OG 社交分享图片」此前实际缺失（无资产、无 metadata，PRD 标记为已完成）。本次补齐：新增 1200×630 品牌分享卡 `public/og-image.png`（Hermes 暗紫风格，纯品牌文案不含个人姓名，fork 用户不会出现名字错误；源文件 `docs/images/og-card.html` 可改后重新导出），`layout.tsx` 补 OpenGraph + Twitter Card metadata。分享链接到微信 / Twitter / LinkedIn 等平台时将显示卡片预览。
+
+**变更文件**：
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `public/og-image.png` | 新增 | 1200×630 社交分享卡片图 |
+| `docs/images/og-card.html` | 新增 | 卡片设计源文件（改后可在浏览器 1200×630 截图重新导出） |
+| `src/app/layout.tsx` | 修改 | 补 openGraph + twitter metadata |
+
+**影响范围**：前端 / 文档
+
+---
+
 ### 2026-09-05 — 新增单元测试体系（vitest）+ 接入 CI
 
 **变更类型**：新增
