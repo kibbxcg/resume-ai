@@ -6,6 +6,31 @@
 
 ## [Unreleased] — 当前开发中
 
+### 2026-09-05 — 新增单元测试体系（vitest）+ 接入 CI
+
+**变更类型**：新增
+
+**说明**：项目首次引入自动化测试。为纯函数层补 19 个用例：余弦相似度（方向/正交/零向量/维度不匹配）、`sanitizeHistory`（system 注入丢弃/非法条目/超长/截取最近 6 条）、`buildSystemPrompt`（Guardrails 置顶/全量 profile 注入/RAG 段落按需出现且位于 profile 之后）。校验逻辑从 route.ts 抽到 `src/lib/validation.ts` 以便复用；顺手接通 `.env.example` 已承诺但从未使用的 `NEXT_PUBLIC_SITE_NAME`（现在真正作用于站点标题）。CI 流水线在 lint/tsc/build 之间加入 `npm run test`。测试全程不下载嵌入模型，秒级完成。
+
+**变更文件**：
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `vitest.config.ts` | 新增 | vitest 配置（node 环境 + `@/` 别名） |
+| `src/lib/embedding.test.ts` | 新增 | 余弦相似度 6 个用例 |
+| `src/lib/validation.test.ts` | 新增 | history 清洗 6 个用例（含注入防御） |
+| `src/lib/prompt.test.ts` | 新增 | System Prompt 结构 7 个用例 |
+| `src/lib/validation.ts` | 新增 | 从 route.ts 抽出的 history 校验模块 |
+| `src/app/api/chat/route.ts` | 修改 | 改用 `sanitizeHistory()` |
+| `src/app/layout.tsx` | 修改 | 站点标题接通 `NEXT_PUBLIC_SITE_NAME` |
+| `package.json` | 修改 | 新增 `test` 脚本 + vitest@2 开发依赖（兼容 Node 20） |
+| `.github/workflows/ci.yml` | 修改 | CI 加入单元测试步骤 |
+| `Makefile` / `CONTRIBUTING.md` | 修改 | check 入口与验证命令补测试 |
+
+**影响范围**：测试 / CI / 后端
+
+---
+
 ### 2026-09-05 — README 中英双语（新增英文版）
 
 **变更类型**：新增

@@ -5,9 +5,10 @@
 #   1. npm ci 安装依赖
 #   2. 类型检查（tsc --noEmit）
 #   3. ESLint 代码规范
-#   4. 生产构建（next build）
+#   4. 单元测试（vitest）
+#   5. 生产构建（next build）
 #
-# 保证合并到 main 的代码一定是"能通过类型检查 + 规范 + 构建"的。
+# 保证合并到 main 的代码一定是"能通过类型检查 + 规范 + 测试 + 构建"的。
 # ============================================================
 
 name: CI
@@ -20,7 +21,7 @@ on:
 
 jobs:
   check:
-    name: Lint + Type-Check + Build
+    name: Lint + Type-Check + Test + Build
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -42,6 +43,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Unit tests
+        run: npm run test
 
       - name: Build
         run: npm run build

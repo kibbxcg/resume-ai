@@ -10,19 +10,11 @@
 // ============================================================
 
 import { NextRequest } from "next/server";
-import { z } from "zod";
 import { buildSystemPrompt, type RAGHit } from "@/lib/prompt";
 import { streamChat } from "@/lib/llm/provider";
 import { loadCuratedQA, searchCuratedQA, type QAItem } from "@/lib/knowledge";
 import { savePendingQA, recordAnalytics, loadCuratedQAFromKV } from "@/lib/kv";
-
-// history 逐条校验：role 白名单 + 内容限长，防恶意客户端注入 role:"system"
-// 的消息劫持对话。上限只防滥用——user 消息本就限 2000 字，assistant 英文
-// 回复（max_tokens=2000）可能到 ~8000 字符，放宽到 10000 防止误伤多轮记忆。
-const HistoryMessageSchema = z.object({
-  role: z.enum(["user", "assistant"]),
-  content: z.string().max(10000),
-});
+import { sanitizeHistory } from "@/lib/validation";
 
 // ── 启动时合并加载：curated_qa.yaml（预置） + Vercel KV（审核收录的）──
 // 缓存带 TTL：chat 和 dashboard 是两个独立 serverless 函数，dashboard 收录
@@ -69,13 +61,8 @@ export async function POST(request: NextRequest) {
     // message 必须是字符串——非字符串（数字/对象等）礼貌 400，而不是抛 TypeError 变 500
     const userMessage: string =
       typeof body?.message === "string" ? body.message.trim() : "";
-    // history 由浏览器传入，属于不可信输入：逐条 zod 校验，不合格的条目直接丢弃
-    const rawHistory: unknown[] = Array.isArray(body?.history) ? body.history : [];
-    const history: { role: "user" | "assistant"; content: string }[] = rawHistory
-      .map((m) => HistoryMessageSchema.safeParse(m))
-      .filter((r) => r.success)
-      .map((r) => r.data)
-      .slice(-6);
+    // history 由浏览器传入，属于不可信输入：白名单校验 + 限长 + 截取最近几条
+    const history = sanitizeHistory(body?.history);
 
     if (!userMessage) {
       return new Response(

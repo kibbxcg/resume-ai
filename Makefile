@@ -1,4 +1,4 @@
-.PHONY: dev build start lint type-check check deploy
+.PHONY: dev build start lint type-check test check deploy
 
 # 本地开发
 dev:
@@ -20,8 +20,12 @@ lint:
 type-check:
 	npx tsc --noEmit
 
+# 单元测试
+test:
+	npm run test
+
 # 全量检查（CI 入口）
-check: lint type-check
+check: lint type-check test
 
 # 部署到 Vercel
 deploy:

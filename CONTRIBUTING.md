@@ -37,10 +37,13 @@ npm run dev
 ```bash
 npm run lint          # ESLint 代码规范
 npx tsc --noEmit      # TypeScript 类型检查
+npm run test          # 单元测试（vitest）
 npm run build         # 生产构建
 ```
 
-PR 合并前这三个必须全部通过（CI 也会自动检查）。
+PR 合并前这四项必须全部通过（CI 也会自动检查）。
+
+> 💡 给纯函数（lib/ 下的检索、校验、Prompt 拼装等）加改动时，顺手在同名 `.test.ts` 里补几个用例，跑 `npm run test` 即可验证，无需启动服务。
 
 ---
 

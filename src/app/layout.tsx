@@ -3,7 +3,7 @@ import "./globals.css";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export const metadata: Metadata = {
-  title: "ResumeAI",
+  title: process.env.NEXT_PUBLIC_SITE_NAME || "ResumeAI",
   description: "AI Resume Assistant — your digital interview avatar",
 };
 
