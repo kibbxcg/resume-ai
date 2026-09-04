@@ -6,6 +6,57 @@
 
 ## [Unreleased] — 当前开发中
 
+### 2026-08-01 — 提升 AI 回答质量（回答风格 Prompt + 丰富示例问答）
+
+**变更类型**：修改
+
+**说明**：System Prompt 新增「回答风格」段——要求第一人称自然口吻、结合 profile 具体细节举例、简洁不啰嗦，避免 AI 回答空洞套话；`curated_qa.example.yaml` 补充 3 道高频面试题示例（优势/劣势、职业规划、学习方法），提升冷启动回答质量。
+
+**变更文件**：
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `src/lib/prompt.ts` | 修改 | Persona 段新增「回答风格」指引（自然第一人称 / 具体细节 / 简洁） |
+| `curated_qa.example.yaml` | 修改 | 新增优势劣势、职业规划、学习方法 3 条示例问答 |
+
+**影响范围**：后端 / 文档
+
+---
+
+### 2026-08-01 — Markdown 正确渲染 + 代码语法高亮
+
+**变更类型**：修复 + 新增
+
+**说明**：修复 AI 回答中 Markdown 样式不生效的问题——此前 Tailwind 的 `prose` 类在没有 `@tailwindcss/typography` 插件时是空操作。引入 typography 插件 + `rehype-highlight` 代码高亮，并按 Hermes 主题定制了一套 highlight.js 令牌配色（浅色 / 深色各一套），代码块在两种主题下都有可读的语法着色。
+
+**变更文件**：
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `package.json` | 修改 | 新增依赖：`@tailwindcss/typography`、`rehype-highlight` |
+| `src/app/globals.css` | 修改 | prose 排版微调 + 定制 hljs 令牌配色（浅色 / 深色两套） |
+| `src/components/ChatWindow.tsx` | 修改 | react-markdown 接入 `rehypeHighlight` 插件 |
+
+**影响范围**：前端
+
+---
+
+### 2026-08-01 — Dashboard 对齐 Hermes 暗紫主题
+
+**变更类型**：修改
+
+**说明**：审核后台整体换装与对话页统一的 Hermes 暗紫风格——渐变标题 + 字距 subtitle、玻璃质感统计卡片、色点小节标题、紫色渐变主按钮、来源徽章样式、玻璃弹窗，以及更友好的空状态 / 错误态样式。
+
+**变更文件**：
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `src/app/dashboard/page.tsx` | 修改 | 标题 / 统计卡 / 小节标题 / 按钮 / 徽章 / 弹窗 / 空态错误态全面对齐 Hermes 主题 |
+
+**影响范围**：前端
+
+---
+
 ### 2026-08-01 — 新增部署指南 + 更新排障手册
 
 **变更类型**：文档
