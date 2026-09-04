@@ -62,7 +62,7 @@ When you send your AI avatar link to an interviewer, you're **proving your engin
 ## 🚀 One-click deploy
 
 <p align="center">
-  <a href="https://vercel.com/new/clone?repository-url=https://github.com/kibbxcg/resume-ai&env=LLM_PROVIDER,LLM_API_KEY,DASHBOARD_SECRET&envDescription=%E9%85%8D%E7%BD%AE%20LLM%20API%20%28%E5%8E%82%E5%95%86%20%2F%20%E5%AF%86%E9%92%A5%20%2F%20%E5%90%8E%E5%8F%B0%E5%AF%86%E7%A0%81%29&envLink=https://github.com/kibbxcg/resume-ai#configuration">
+  <a href="https://vercel.com/new/clone?repository-url=https://github.com/kibbxcg/resume-ai&env=LLM_PROVIDER,LLM_API_KEY,DASHBOARD_SECRET&envDescription=%E9%85%8D%E7%BD%AE%20LLM%20API%20%28%E5%8E%82%E5%95%86%20%2F%20%E5%AF%86%E9%92%A5%20%2F%20%E5%90%8E%E5%8F%B0%E5%AF%86%E7%A0%81%29&envLink=https://github.com/kibbxcg/resume-ai/blob/main/README.en.md%23-supported-llms">
     <img src="https://vercel.com/button" alt="Deploy to Vercel">
   </a>
 </p>

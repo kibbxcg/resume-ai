@@ -62,7 +62,7 @@ ResumeAI 把你的个人信息变成 AI 分身——面试官打开链接，打�
 ## 🚀 一键部署
 
 <p align="center">
-  <a href="https://vercel.com/new/clone?repository-url=https://github.com/kibbxcg/resume-ai&env=LLM_PROVIDER,LLM_API_KEY,DASHBOARD_SECRET&envDescription=%E9%85%8D%E7%BD%AE%20LLM%20API%20%28%E5%8E%82%E5%95%86%20%2F%20%E5%AF%86%E9%92%A5%20%2F%20%E5%90%8E%E5%8F%B0%E5%AF%86%E7%A0%81%29&envLink=https://github.com/kibbxcg/resume-ai#配置说明">
+  <a href="https://vercel.com/new/clone?repository-url=https://github.com/kibbxcg/resume-ai&env=LLM_PROVIDER,LLM_API_KEY,DASHBOARD_SECRET&envDescription=%E9%85%8D%E7%BD%AE%20LLM%20API%20%28%E5%8E%82%E5%95%86%20%2F%20%E5%AF%86%E9%92%A5%20%2F%20%E5%90%8E%E5%8F%B0%E5%AF%86%E7%A0%81%29&envLink=https://github.com/kibbxcg/resume-ai%23-%E6%94%AF%E6%8C%81%E7%9A%84-llm">
     <img src="https://vercel.com/button" alt="Deploy to Vercel">
   </a>
 </p>
