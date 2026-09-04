@@ -133,7 +133,7 @@ mv node_modules/@xenova/transformers/node_modules/sharp/lib/index.js \
 # module.exports = function() { throw new Error("图片功能不可用，文本嵌入不受影响"); };
 ```
 
-**注意**：每次 `npm install --ignore-scripts` 后需要重新替换。后续可加 `postinstall` 脚本自动化。
+**已自动化**（`scripts/fix-sharp.js`）：脚本逐个检查项目内的 sharp 副本，**只在 require 失败时**才写入空壳（完好或已空壳则跳过），幂等可重复执行。挂载在 `postinstall` 和 `dev`/`build` 前置——普通安装自动运行；`--ignore-scripts` 会跳过 postinstall，但首次 `npm run dev` / `npm run build` 时会自动补上（也可手动 `npm run postinstall`）。
 
 ---
 
@@ -495,6 +495,6 @@ const v3 = await embed("今天天气怎么样");        // 不相关 → < 0.4
 | 问题 | 影响 | 计划解决 |
 |------|------|---------|
 | Vercel 域名被墙 | 手机无法访问 | Phase 4：绑定自定义域名 |
-| sharp 空壳每次 install 都要重做 | 本地开发不便 | 加 `postinstall` 脚本自动化 |
+| sharp 空壳每次 install 都要重做 | 本地开发不便 | ✅ 已解决（`scripts/fix-sharp.js` 挂载 postinstall + dev/build 前置，只在 sharp 加载失败时写空壳）|
 | Vercel 上嵌入模型冷启动仍偏慢 | 首次对话 10-60 秒 | ✅ 已缓解（60s 超时 + 双源回退 + 原生库打包）；预热后正常 |
 | RAG 检索缓存重启丢失 | YAML Q&A 每次重启要重新算向量 | ✅ 已解决（Phase 2 接 KV，重启从 KV 加载）|

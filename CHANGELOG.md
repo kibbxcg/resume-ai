@@ -6,6 +6,25 @@
 
 ## [Unreleased] — 当前开发中
 
+### 2026-09-05 — sharp 空壳修复自动化（postinstall + dev/build 前置）
+
+**变更类型**：新增
+
+**说明**：把「sharp 下载失败 → 手动替换空壳」的操作自动化为 `scripts/fix-sharp.js`。脚本逐个检查项目内的 sharp 副本，只在 require 失败时写入空壳（完好或已空壳则跳过），幂等可重复执行。挂载在 `postinstall` 与 `dev`/`build` 前置：普通安装自动运行；国内用户 `npm install --ignore-scripts`（会跳过 postinstall）也能在首次 dev/build 时自动修复。海外环境 sharp 正常时脚本为空操作，不影响 Vercel 构建。
+
+**变更文件**：
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `scripts/fix-sharp.js` | 新增 | 幂等的 sharp 空壳修复脚本（只在加载失败时替换） |
+| `package.json` | 修改 | 新增 `postinstall`；`dev`/`build` 前置运行修复脚本 |
+| `docs/TROUBLESHOOTING.md` | 修改 | 问题 5 标记已自动化；待解决清单移除该项 |
+| `CONTRIBUTING.md` | 修改 | 本地开发补充国内网络装依赖指引 |
+
+**影响范围**：构建配置 / 文档
+
+---
+
 ### 2026-08-01 — 提升 AI 回答质量（回答风格 Prompt + 丰富示例问答）
 
 **变更类型**：修改
