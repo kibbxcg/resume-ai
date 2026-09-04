@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 320px; height: 320px; overflow: hidden; }
+  body {
+    background: #0a0a0f;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tile {
+    width: 272px; height: 272px; border-radius: 64px;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    box-shadow: 0 0 70px rgba(139, 92, 246, 0.55);
+    display: flex; align-items: center; justify-content: center;
+  }
+  svg { width: 160px; height: 160px; }
+</style>
+</head>
+<body>
+  <div class="tile">
+    <!-- 与 ChatWindow 空状态的品牌头像同款火花图形 -->
+    <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.6"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden>
+      <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
+    </svg>
+  </div>
+</body>
+</html>
